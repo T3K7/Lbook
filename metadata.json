@@ -1,0 +1,6 @@
+{
+  "name": "Lbook",
+  "description": "Lbook — Professional Story Reader & Multi-Engine TTS Pipeline for TXT/EPUB novels with smart chapter detection, karaoke sentence highlighting, pronunciation rules, and prefetch audio queue.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,319 @@
+@import "tailwindcss";
+
+:root,
+[data-theme="light"] {
+  /* ==================================================
+     LIGHT THEME TRUE GLASSMORPHISM TOKENS (HIGH CLARITY)
+     ================================================== */
+  --bg-app: transparent;
+
+  /* Translucent glass surfaces - allowing artwork to clearly show through */
+  --glass-bg: rgba(255, 255, 255, 0.25);
+  --glass-bg-strong: rgba(255, 255, 255, 0.40);
+  --glass-bg-soft: rgba(255, 255, 255, 0.14);
+  --glass-bg-sidebar: rgba(255, 255, 255, 0.30);
+  --glass-bg-header: rgba(255, 255, 255, 0.26);
+  --glass-bg-player: rgba(255, 255, 255, 0.34);
+  --glass-bg-card: rgba(255, 255, 255, 0.18);
+  --glass-bg-card-hover: rgba(255, 255, 255, 0.32);
+  --glass-bg-dropdown: rgba(255, 255, 255, 0.65);
+  --glass-bg-dialog: rgba(255, 255, 255, 0.68);
+  --glass-bg-input: rgba(255, 255, 255, 0.20);
+  --glass-bg-main: transparent;
+
+  /* Glass borders - translucent frosted rim highlights */
+  --glass-border: rgba(255, 255, 255, 0.45);
+  --glass-border-subtle: rgba(15, 23, 42, 0.06);
+  --glass-border-strong: rgba(255, 255, 255, 0.65);
+
+  /* Deep glass shadows with subtle inner light */
+  --glass-shadow: 0 8px 32px 0 rgba(15, 23, 42, 0.06), inset 0 1px 0 0 rgba(255, 255, 255, 0.70);
+  --glass-shadow-player: 0 -8px 32px 0 rgba(15, 23, 42, 0.06), inset 0 1px 0 0 rgba(255, 255, 255, 0.75);
+
+  --glass-blur: 16px;
+  --glass-blur-header: 16px;
+  --glass-blur-sidebar: 20px;
+  --glass-blur-player: 20px;
+  --glass-blur-dialog: 24px;
+  --glass-saturate: 135%;
+
+  /* Direct Semantic Token Mappings */
+  --bg-sidebar: var(--glass-bg-sidebar);
+  --bg-header: var(--glass-bg-header);
+  --bg-surface: var(--glass-bg-strong);
+  --bg-surface-secondary: var(--glass-bg-soft);
+  --bg-card: var(--glass-bg-card);
+  --bg-card-hover: var(--glass-bg-card-hover);
+  --bg-input: var(--glass-bg-input);
+  --bg-player: var(--glass-bg-player);
+  --bg-dropdown: var(--glass-bg-dropdown);
+
+  /* High-contrast crisp typography on light glass (navy deep optical presence) */
+  --text-primary: #070B14;
+  --text-secondary: #1E293B;
+  --text-muted: #334155;
+  --text-disabled: #64748B;
+
+  --border: var(--glass-border);
+  --border-subtle: var(--glass-border-subtle);
+  --border-active: #047857;
+
+  --accent: #047857;
+  --accent-hover: #065F46;
+  --accent-soft: rgba(4, 120, 87, 0.16);
+  --accent-border: rgba(4, 120, 87, 0.40);
+
+  --danger: #DC2626;
+  --danger-soft: rgba(220, 38, 38, 0.12);
+  --warning: #D97706;
+  --warning-soft: rgba(217, 119, 6, 0.12);
+  --success: #059669;
+
+  --shadow: var(--glass-shadow);
+  --shadow-md: 0 12px 36px -4px rgba(15, 23, 42, 0.12);
+  --overlay: rgba(244, 246, 248, 0.12);
+
+  --font-sans: 'Be Vietnam Pro', 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-serif: 'Source Serif 4', Georgia, Cambria, serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  color-scheme: light;
+}
+
+.dark,
+[data-theme="dark"] {
+  /* ==================================================
+     DARK THEME TRUE GLASSMORPHISM TOKENS (HIGH CLARITY)
+     ================================================== */
+  --bg-app: transparent;
+
+  /* Translucent glass surfaces - allowing artwork to clearly show through */
+  --glass-bg: rgba(15, 23, 42, 0.22);
+  --glass-bg-strong: rgba(15, 23, 42, 0.36);
+  --glass-bg-soft: rgba(15, 23, 42, 0.13);
+  --glass-bg-sidebar: rgba(11, 18, 32, 0.30);
+  --glass-bg-header: rgba(11, 18, 32, 0.25);
+  --glass-bg-player: rgba(11, 18, 32, 0.34);
+  --glass-bg-card: rgba(15, 23, 42, 0.18);
+  --glass-bg-card-hover: rgba(15, 23, 42, 0.28);
+  --glass-bg-dropdown: rgba(15, 23, 42, 0.65);
+  --glass-bg-dialog: rgba(11, 18, 32, 0.68);
+  --glass-bg-input: rgba(15, 23, 42, 0.20);
+  --glass-bg-main: transparent;
+
+  /* Glass borders - crisp translucent highlights */
+  --glass-border: rgba(255, 255, 255, 0.10);
+  --glass-border-subtle: rgba(255, 255, 255, 0.05);
+  --glass-border-strong: rgba(255, 255, 255, 0.18);
+
+  /* Deep dark glass shadows with subtle top rim light */
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.22), inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+  --glass-shadow-player: 0 -8px 32px 0 rgba(0, 0, 0, 0.26), inset 0 1px 0 0 rgba(255, 255, 255, 0.10);
+
+  --glass-blur: 16px;
+  --glass-blur-header: 16px;
+  --glass-blur-sidebar: 20px;
+  --glass-blur-player: 20px;
+  --glass-blur-dialog: 24px;
+  --glass-saturate: 135%;
+
+  /* Direct Semantic Token Mappings */
+  --bg-sidebar: var(--glass-bg-sidebar);
+  --bg-header: var(--glass-bg-header);
+  --bg-surface: var(--glass-bg-strong);
+  --bg-surface-secondary: var(--glass-bg-soft);
+  --bg-card: var(--glass-bg-card);
+  --bg-card-hover: var(--glass-bg-card-hover);
+  --bg-input: var(--glass-bg-input);
+  --bg-player: var(--glass-bg-player);
+  --bg-dropdown: var(--glass-bg-dropdown);
+
+  /* High-contrast crisp typography on dark glass (brilliant white and light slate) */
+  --text-primary: #FFFFFF;
+  --text-secondary: #F1F5F9;
+  --text-muted: #CBD5E1;
+  --text-disabled: #94A3B8;
+
+  --border: var(--glass-border);
+  --border-subtle: var(--glass-border-subtle);
+  --border-active: #10B981;
+
+  --accent: #10B981;
+  --accent-hover: #34D399;
+  --accent-soft: rgba(16, 185, 129, 0.20);
+  --accent-border: rgba(16, 185, 129, 0.45);
+
+  --danger: #F87171;
+  --danger-soft: rgba(248, 113, 113, 0.16);
+  --warning: #FBBF24;
+  --warning-soft: rgba(251, 191, 36, 0.16);
+  --success: #10B981;
+
+  --shadow: var(--glass-shadow);
+  --shadow-md: 0 12px 36px -4px rgba(0, 0, 0, 0.45);
+  --overlay: rgba(11, 18, 32, 0.14);
+
+  color-scheme: dark;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: transparent;
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  user-select: none;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Glass Surface Utility Classes */
+.glass-panel {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  box-shadow: var(--glass-shadow);
+}
+
+.glass-panel-strong {
+  background: var(--glass-bg-strong);
+  border: 1px solid var(--glass-border-strong);
+  backdrop-filter: blur(var(--glass-blur-dialog)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur-dialog)) saturate(var(--glass-saturate));
+  box-shadow: var(--shadow-md);
+}
+
+.glass-panel-soft {
+  background: var(--glass-bg-soft);
+  border: 1px solid var(--glass-border-subtle);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+}
+
+.glass-sidebar {
+  background: var(--glass-bg-sidebar);
+  border-right: 1px solid var(--glass-border);
+  backdrop-filter: blur(var(--glass-blur-sidebar)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur-sidebar)) saturate(var(--glass-saturate));
+}
+
+.glass-header {
+  background: var(--glass-bg-header);
+  border-bottom: 1px solid var(--glass-border);
+  backdrop-filter: blur(var(--glass-blur-header)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur-header)) saturate(var(--glass-saturate));
+}
+
+.glass-player {
+  background: var(--glass-bg-player);
+  border-top: 1px solid var(--glass-border);
+  backdrop-filter: blur(var(--glass-blur-player)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur-player)) saturate(var(--glass-saturate));
+  box-shadow: var(--glass-shadow-player);
+}
+
+.glass-card {
+  background: var(--glass-bg-card);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  box-shadow: var(--glass-shadow);
+}
+
+.glass-dropdown {
+  background: var(--glass-bg-dropdown);
+  border: 1px solid var(--glass-border-strong);
+  backdrop-filter: blur(var(--glass-blur-dialog)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur-dialog)) saturate(var(--glass-saturate));
+  box-shadow: var(--shadow-md);
+}
+
+/* Fallback for environments lacking backdrop-filter support */
+@supports not ((-webkit-backdrop-filter: blur(10px)) or (backdrop-filter: blur(10px))) {
+  :root,
+  [data-theme="light"] {
+    --glass-bg: rgba(255, 255, 255, 0.90);
+    --glass-bg-strong: rgba(255, 255, 255, 0.96);
+    --glass-bg-soft: rgba(255, 255, 255, 0.82);
+    --glass-bg-sidebar: #F8FAFC;
+    --glass-bg-header: #FFFFFF;
+    --glass-bg-player: #FFFFFF;
+    --glass-bg-input: #FFFFFF;
+  }
+
+  .dark,
+  [data-theme="dark"] {
+    --glass-bg: rgba(15, 23, 42, 0.90);
+    --glass-bg-strong: rgba(15, 23, 42, 0.96);
+    --glass-bg-soft: rgba(15, 23, 42, 0.82);
+    --glass-bg-sidebar: #0F172A;
+    --glass-bg-header: #0F172A;
+    --glass-bg-player: #0F172A;
+    --glass-bg-input: #0F172A;
+  }
+}
+
+/* Custom desktop scrollbar styling linked to glass theme tokens */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.35);
+  border-radius: 9999px;
+  backdrop-filter: blur(4px);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.60);
+}
+
+/* Reading font styles */
+.font-book-serif {
+  font-family: var(--font-serif);
+}
+.font-book-sans {
+  font-family: var(--font-sans);
+}
+.font-book-mono {
+  font-family: var(--font-mono);
+}
+
+/* Lbook Shared Typography Classes */
+.text-page-title {
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  color: var(--text-primary);
+}
+
+.text-section-title {
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: var(--text-primary);
+}
+
+.text-card-title {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+}
+
+.text-item-title {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.text-meta-medium {
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.text-caption-bold {
+  font-weight: 600;
+  color: var(--text-muted);
+}
+

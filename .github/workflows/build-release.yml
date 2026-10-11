@@ -1,0 +1,57 @@
+name: Build and Release Lbook for Windows
+
+on:
+  push:
+    branches: [ "main", "master" ]
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci || npm install
+
+      - name: Build Web App & Electron
+        run: npm run build:all
+
+      - name: Build Windows Executables & Installer
+        run: npx electron-builder --win nsis zip --x64 --config electron-builder.json
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: lbook-windows-release
+          path: |
+            release/*.exe
+            release/*.zip
+            release/*.7z
+          if-no-files-found: error
+
+      - name: Create GitHub Release on Tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release/Lbook-Setup.exe
+            release/Lbook-*.zip
+          draft: false
+          prerelease: false
+          generate_release_notes: true

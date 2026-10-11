@@ -1,0 +1,55 @@
+{
+  "appId": "com.lbook.desktop",
+  "productName": "Lbook",
+  "copyright": "Copyright © 2026 Lbook Team",
+  "directories": {
+    "output": "release",
+    "buildResources": "build"
+  },
+  "files": [
+    "dist/**/*",
+    "dist-electron/**/*",
+    "package.json",
+    "!node_modules/**/*",
+    "!**/*.map",
+    "!.env",
+    "!.env.*"
+  ],
+  "extraResources": [
+    {
+      "from": "bin",
+      "to": "bin",
+      "filter": ["ffmpeg.exe", "ffmpeg", "*.txt"]
+    }
+  ],
+  "asar": true,
+  "asarUnpack": [
+    "**/bin/**"
+  ],
+  "win": {
+    "signExecutable": false,
+    "target": [
+      {
+        "target": "nsis",
+        "arch": ["x64"]
+      },
+      {
+        "target": "zip",
+        "arch": ["x64"]
+      }
+    ]
+  },
+  "nsis": {
+    "oneClick": false,
+    "perMachine": false,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true,
+    "shortcutName": "Lbook",
+    "artifactName": "Lbook-Setup.${ext}",
+    "uninstallDisplayName": "Lbook - Trình Đọc & Nghe Sách Thông Minh"
+  },
+  "portable": {
+    "artifactName": "Lbook-Portable.${ext}"
+  }
+}
