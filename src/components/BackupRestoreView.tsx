@@ -26,9 +26,9 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({ onDataRest
   const [showConfirmResetModal, setShowConfirmResetModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleExportBackup = () => {
+  const handleExportBackup = async () => {
     try {
-      const jsonContent = BackupService.createFullBackup();
+      const jsonContent = await BackupService.createFullBackupAsync();
       const blob = new Blob([jsonContent], { type: 'application/json;charset=utf-8' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');

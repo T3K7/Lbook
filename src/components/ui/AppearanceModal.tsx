@@ -1,5 +1,5 @@
-import React, { useRef } from 'react';
-import { Sun, Moon, Laptop, Plus, Check, Image as ImageIcon } from 'lucide-react';
+import React, { useRef, useState } from 'react';
+import { Sun, Moon, Laptop, Plus, Check, Image as ImageIcon, Trash2 } from 'lucide-react';
 import { useTheme } from '../../design-system/ThemeContext';
 import { PRESET_BACKGROUNDS } from '../../design-system/tokens';
 import { Modal } from './Modal';
@@ -13,32 +13,47 @@ export const AppearanceModal: React.FC<AppearanceModalProps> = ({ isOpen, onClos
   const {
     themeMode,
     setThemeMode,
-    isDark,
     backgroundImage,
     setBackgroundImage,
     overlayOpacity,
     setOverlayOpacity,
+    customBackgrounds,
+    addCustomBackground,
+    removeCustomBackground,
   } = useTheme();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState<boolean>(false);
 
-  const handleCustomUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCustomUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const dataUrl = event.target?.result as string;
-      if (dataUrl) {
-        setBackgroundImage(dataUrl);
-      }
-    };
-    reader.readAsDataURL(file);
+
+    const isValid =
+      /\.(jpe?g|png|webp)$/i.test(file.name) ||
+      ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type.toLowerCase());
+
+    if (!isValid) {
+      setUploadError('Chỉ hỗ trợ tệp ảnh định dạng JPG, PNG hoặc WebP.');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
+    setUploadError(null);
+    setIsUploading(true);
+    try {
+      await addCustomBackground(file);
+    } catch {
+      setUploadError('Không thể nạp ảnh. Vui lòng thử lại với ảnh nhỏ hơn (< 12MB).');
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   };
 
-  const currentBgItem = PRESET_BACKGROUNDS.find((b) => b.id === backgroundImage);
-  const isCustomUpload =
-    backgroundImage.startsWith('data:') ||
-    (!currentBgItem && backgroundImage !== 'none');
+  const currentCustomBg = customBackgrounds.find((b) => b.id === backgroundImage);
+  const activeBgUrl = currentCustomBg?.dataUrl || (backgroundImage.startsWith('data:') ? backgroundImage : '');
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Giao diện đọc &amp; Hiển thị" maxWidth="lg">
@@ -52,23 +67,18 @@ export const AppearanceModal: React.FC<AppearanceModalProps> = ({ isOpen, onClos
           <div className="relative rounded-2xl overflow-hidden border border-[var(--border)] p-4 bg-[var(--bg-card)] backdrop-blur-md flex items-center gap-4 shadow-xs">
             {/* Phone mini mockup */}
             <div className="w-18 h-28 rounded-xl overflow-hidden border border-[var(--border)] relative shadow-md shrink-0 bg-[var(--bg-app)]">
-              {backgroundImage !== 'none' && (
+              {activeBgUrl ? (
                 <img
-                  src={
-                    currentBgItem?.url ||
-                    (isCustomUpload
-                      ? backgroundImage
-                      : '/src/assets/images/bg_fantasy_heroine_1791194675927.jpg')
-                  }
+                  src={activeBgUrl}
                   alt="Preview"
                   className="w-full h-full object-cover filter blur-[1px]"
                 />
-              )}
+              ) : null}
               <div
                 className="absolute inset-0 transition-opacity"
                 style={{
                   backgroundColor: 'var(--bg-app)',
-                  opacity: backgroundImage !== 'none' ? overlayOpacity : 1,
+                  opacity: activeBgUrl ? overlayOpacity : 1,
                 }}
               />
               <div className="absolute inset-0 p-1.5 flex flex-col justify-between z-10 pointer-events-none">
@@ -92,7 +102,7 @@ export const AppearanceModal: React.FC<AppearanceModalProps> = ({ isOpen, onClos
               <div className="text-xs text-[var(--text-secondary)] mt-0.5 leading-relaxed">
                 {backgroundImage === 'none'
                   ? 'Đang dùng nền thuần tối giản của hệ thống.'
-                  : 'Đang áp dụng hình nền nghệ thuật với lớp phủ bảo đảm độ tương phản chữ tuyệt đối.'}
+                  : 'Đang áp dụng hình nền tùy chỉnh với lớp phủ bảo đảm độ tương phản chữ tuyệt đối.'}
               </div>
               <div className="w-12 h-0.5 bg-[var(--accent)] rounded-full mt-2" />
             </div>
@@ -143,35 +153,21 @@ export const AppearanceModal: React.FC<AppearanceModalProps> = ({ isOpen, onClos
           </div>
         </div>
 
-        {/* 3. Background Artworks Selection */}
+        {/* 3. Background Selection: Trống + Thêm ảnh của tôi + Custom Backgrounds */}
         <div>
-          <div className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">
-            Hình nền cơ bản
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
+              Hình nền ứng dụng
+            </div>
+            {uploadError && (
+              <span className="text-[11px] text-rose-500 font-semibold">
+                {uploadError}
+              </span>
+            )}
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {/* Upload Custom Image */}
-            <div
-              onClick={() => fileInputRef.current?.click()}
-              className="group aspect-[3/4] rounded-2xl border-2 border-dashed border-[var(--border)] hover:border-[var(--accent)] flex flex-col items-center justify-center p-3 text-center cursor-pointer transition-all bg-[var(--bg-card)] hover:bg-[var(--accent-soft)]"
-            >
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleCustomUpload}
-                className="hidden"
-              />
-              <div className="w-10 h-10 rounded-full bg-[var(--accent-soft)] text-[var(--accent)] flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
-                <Plus className="w-5 h-5 stroke-[2.5]" />
-              </div>
-              <span className="text-xs font-bold text-[var(--text-primary)]">
-                Tải lên
-              </span>
-              <span className="text-[10px] text-[var(--text-muted)] mt-0.5">Từ máy tính</span>
-            </div>
-
-            {/* Presets */}
+            {/* Presets (Trống mặc định) */}
             {PRESET_BACKGROUNDS.map((bg) => {
               const isSelected = backgroundImage === bg.id;
 
@@ -184,28 +180,19 @@ export const AppearanceModal: React.FC<AppearanceModalProps> = ({ isOpen, onClos
                       ? 'border-[var(--accent)] ring-2 ring-[var(--accent-border)] scale-[1.02]'
                       : 'border-[var(--border)] hover:border-[var(--accent-border)]'
                   }`}
+                  title={bg.name}
                 >
-                  {bg.url ? (
-                    <img
-                      src={bg.url}
-                      alt={bg.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-[var(--bg-surface-secondary)] flex flex-col items-center justify-center p-2 text-center text-[var(--text-muted)]">
-                      <ImageIcon className="w-6 h-6 mb-1 opacity-50" />
-                      <span className="text-[10px] font-mono uppercase">Trống</span>
-                    </div>
-                  )}
+                  <div className="w-full h-full bg-[var(--bg-surface-secondary)] flex flex-col items-center justify-center p-2 text-center text-[var(--text-muted)]">
+                    <ImageIcon className="w-6 h-6 mb-1 opacity-50" />
+                    <span className="text-[10px] font-mono uppercase">Trống</span>
+                  </div>
 
-                  {/* Overlay Title */}
                   <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/80 via-black/40 to-transparent text-white text-center">
                     <span className="text-[11px] font-semibold block truncate">
                       {bg.name}
                     </span>
                   </div>
 
-                  {/* Selected check circle */}
                   {isSelected && (
                     <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-[var(--accent)] text-white flex items-center justify-center shadow-md">
                       <Check className="w-3.5 h-3.5 stroke-[3]" />
@@ -214,6 +201,79 @@ export const AppearanceModal: React.FC<AppearanceModalProps> = ({ isOpen, onClos
                 </div>
               );
             })}
+
+            {/* Custom Backgrounds uploaded by user */}
+            {customBackgrounds.map((bg) => {
+              const isSelected = backgroundImage === bg.id;
+
+              return (
+                <div
+                  key={bg.id}
+                  onClick={() => setBackgroundImage(bg.id)}
+                  className={`group aspect-[3/4] rounded-2xl border relative overflow-hidden cursor-pointer transition-all shadow-xs ${
+                    isSelected
+                      ? 'border-[var(--accent)] ring-2 ring-[var(--accent-border)] scale-[1.02]'
+                      : 'border-[var(--border)] hover:border-[var(--accent-border)]'
+                  }`}
+                  title={bg.name}
+                >
+                  <img
+                    src={bg.dataUrl}
+                    alt={bg.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+
+                  <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/80 via-black/40 to-transparent text-white text-center">
+                    <span className="text-[11px] font-semibold block truncate">
+                      {bg.name}
+                    </span>
+                  </div>
+
+                  {isSelected && (
+                    <div className="absolute top-2 left-2 w-6 h-6 rounded-full bg-[var(--accent)] text-white flex items-center justify-center shadow-md">
+                      <Check className="w-3.5 h-3.5 stroke-[3]" />
+                    </div>
+                  )}
+
+                  {/* Delete button */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeCustomBackground(bg.id);
+                    }}
+                    className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/60 hover:bg-rose-600 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all cursor-pointer shadow-sm hover:scale-110"
+                    title="Xóa hình nền này"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                </div>
+              );
+            })}
+
+            {/* Upload Custom Image (Thêm ảnh của tôi) */}
+            <div
+              onClick={() => !isUploading && fileInputRef.current?.click()}
+              className={`group aspect-[3/4] rounded-2xl border-2 border-dashed border-[var(--border)] hover:border-[var(--accent)] flex flex-col items-center justify-center p-3 text-center cursor-pointer transition-all bg-[var(--bg-card)] hover:bg-[var(--accent-soft)] ${
+                isUploading ? 'opacity-70 pointer-events-none' : ''
+              }`}
+              title="Chọn ảnh JPG, PNG hoặc WebP từ máy tính"
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                onChange={handleCustomUpload}
+                className="hidden"
+              />
+              <div className="w-10 h-10 rounded-full bg-[var(--accent-soft)] text-[var(--accent)] flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                <Plus className="w-5 h-5 stroke-[2.5]" />
+              </div>
+              <span className="text-xs font-bold text-[var(--text-primary)]">
+                {isUploading ? 'Đang nạp...' : 'Thêm ảnh của tôi'}
+              </span>
+              <span className="text-[10px] text-[var(--text-muted)] mt-0.5">JPG, PNG, WebP</span>
+            </div>
           </div>
         </div>
 
@@ -238,7 +298,7 @@ export const AppearanceModal: React.FC<AppearanceModalProps> = ({ isOpen, onClos
               className="w-full accent-[var(--accent)] cursor-pointer"
             />
             <div className="text-[11px] text-[var(--text-muted)]">
-              Lớp phủ làm mờ tự động cân chỉnh để chữ luôn sắc nét và tuyệt đối không bị chìm.
+              Tăng độ mờ phủ khi dùng ảnh có nhiều chi tiết sáng để đọc văn bản rõ ràng nhất.
             </div>
           </div>
         )}

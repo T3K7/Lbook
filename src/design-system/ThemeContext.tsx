@@ -26,7 +26,7 @@ const ThemeContext = createContext<ThemeContextType>({
   themeMode: 'dark',
   setThemeMode: () => {},
   isDark: true,
-  backgroundImage: 'fantasy_heroine',
+  backgroundImage: 'none',
   setBackgroundImage: () => {},
   overlayOpacity: 0.14,
   setOverlayOpacity: () => {},
@@ -50,9 +50,11 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [backgroundImage, setBackgroundImageState] = useState<string>(() => {
     try {
       const saved = localStorage.getItem(BG_STORAGE_KEY);
-      if (saved !== null) return saved;
+      if (saved && saved !== 'fantasy_heroine' && saved !== 'emerald_silk') {
+        return saved;
+      }
     } catch {}
-    return 'fantasy_heroine';
+    return 'none';
   });
 
   const [overlayOpacity, setOverlayOpacityState] = useState<number>(() => {
@@ -83,12 +85,15 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         // Validate currently selected background
         try {
           const currentBg = localStorage.getItem(BG_STORAGE_KEY);
-          if (currentBg && currentBg.startsWith('custom_bg_')) {
+          if (currentBg === 'fantasy_heroine' || currentBg === 'emerald_silk') {
+            setBackgroundImageState('none');
+            localStorage.setItem(BG_STORAGE_KEY, 'none');
+          } else if (currentBg && currentBg.startsWith('custom_bg_')) {
             const exists = bgs.some((b) => b.id === currentBg);
             if (!exists) {
               // Deleted or inaccessible, safely revert to default
-              setBackgroundImageState('fantasy_heroine');
-              localStorage.setItem(BG_STORAGE_KEY, 'fantasy_heroine');
+              setBackgroundImageState('none');
+              localStorage.setItem(BG_STORAGE_KEY, 'none');
             }
           }
         } catch {}
@@ -173,9 +178,9 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       await customBgService.delete(id);
       setCustomBackgrounds((prev) => prev.filter((b) => b.id !== id));
 
-      // If the removed image was currently active, fall back to fantasy_heroine
+      // If the removed image was currently active, fall back to none
       if (backgroundImage === id) {
-        setBackgroundImage('fantasy_heroine');
+        setBackgroundImage('none');
       }
     },
     [backgroundImage, setBackgroundImage]

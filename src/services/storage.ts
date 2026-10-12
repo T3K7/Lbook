@@ -1,5 +1,4 @@
 import { Book, Chapter, ReadingProgress, Bookmark, Dictionary, AppSettings, VisitHistoryItem, AiModelItem } from '../types';
-import { parseTxtContent } from './txtParser';
 
 const STORAGE_KEYS = {
   BOOKS: 'storytts_books',
@@ -126,6 +125,21 @@ class IndexedDbHelper {
     }
   }
 
+  static async clearStore(storeName: string): Promise<void> {
+    try {
+      const db = await this.getDB();
+      if (!db.objectStoreNames.contains(storeName)) return;
+      const tx = db.transaction(storeName, 'readwrite');
+      tx.objectStore(storeName).clear();
+      return new Promise((res) => {
+        tx.oncomplete = () => res();
+        tx.onerror = () => res();
+      });
+    } catch (err) {
+      console.warn(`IndexedDB clearStore ${storeName} error:`, err);
+    }
+  }
+
   static async getAllBooks(): Promise<Book[]> {
     try {
       const db = await this.getDB();
@@ -151,204 +165,51 @@ const memoryCache = {
 
 export class StorageService {
   /**
-   * Initializes database with sample books if empty, and hydrates memory cache
+   * Initializes database with clean slate migration if needed, and hydrates memory cache.
+   * Does NOT generate sample books, ensuring user starts with a pristine library.
    */
   static init(): { books: Book[]; activeBookId: string } {
-    const isDbInitialized = localStorage.getItem('storytts_db_initialized');
-    let books = this.getBooks();
+    const CLEAN_MIGRATION_KEY = 'lbook_library_cleaned_v4';
+    const isCleaned = localStorage.getItem(CLEAN_MIGRATION_KEY);
 
-    if (!isDbInitialized && books.length === 0) {
-      localStorage.setItem('storytts_db_initialized', 'true');
-      const book1Id = 'book_dai_chua_te';
-      const book1Text = `CHƯƠNG 1: (1) - BẮT ĐẦU NÓN XANH
-Mục Trần bước vào đại điện Bắc Thương Linh Viện, ánh mắt nhìn về phía xa xăm.
-Trên đỉnh núi mây mù bao phủ, Lạc Ly đang đứng tĩnh lặng trong gió nhẹ.
-
-CHƯƠNG 1: (2) - LẠC LY VÀ MỤC TRẦN
-"Lão công... Nếu như bà bà biết chúng ta làm sự tình, như thế nào phạt chúng ta à?" Tựa vào Mục Trần trong lòng, Lạc Ly mặt ngoài khẩn trương nhưng nội tâm một chút mong chờ hỏi.
-"Yên tâm đi! Có lão công tại, sẽ không bị phát hiện!" Mục Trần nhìn mặt ngoài khẩn trương, trên thực tế ước gì lập tức nhìn trộm mẫu thân và phụ thân hoan ái tình cảnh Lạc Ly nói.
-Nhìn Lạc Ly rõ ràng muốn nhìn thật sự, lại giả vờ không thèm để ý bộ dạng, Mục Trần tâm lý nhịn không được muốn cười, lại nhịn không được vì có khả ái như vậy thê tử cảm thấy hạnh phúc.
-Mục Trần cùng Lạc Ly đã thành thân hơn trăm năm. Lạc Ly đương năm thanh xuân thân thể, bây giờ đã thành thục mê người.
-Trải qua hơn trăm năm tình yêu dễ chịu mục phù.
-
-CHƯƠNG 1: (3) - BIẾN CỐ BẤT NGỜ
-Đêm xuống, ánh trăng bạc chiếu rọi cung điện cổ kính. Tiếng côn trùng kêu rả rích khắp khu rừng tĩnh mịch.
-Một luồng linh lực kỳ lạ bỗng nhiên từ chân trời xa xôi cuồn cuộn kéo tới.`;
-
-      const book1Parsed = parseTxtContent(book1Text, { bookId: book1Id });
-
-      const book1: Book = {
-        id: book1Id,
-        title: 'Đại chúa tể nón xanh sâu xanh biếc (1-65 chương)',
-        author: 'Thiên Tằm Thổ Đậu (Biên dịch)',
-        description: 'Đồng nhân tu tiên huyền huyễn hấp dẫn với hệ thống tình tiết phong phú và bất ngờ.',
-        language: 'vi',
-        coverImagePath: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&q=80&w=400',
-        totalChapters: 192,
-        lastReadChapterId: book1Parsed.chapters[1]?.id || book1Parsed.chapters[0].id,
-        lastReadPosition: 1,
-        lastReadSentenceIndex: 0,
-        listenCount: 42,
-        lastReadTime: new Date(Date.now() - 3600000).toISOString(),
-        sourceType: 'txt',
-        tags: ['Huyền Huyễn', 'Đồng Nhân', 'Tu Tiên'],
-        createdAt: '2026-10-01T10:00:00.000Z',
-        updatedAt: new Date().toISOString(),
-      };
-
-      const book2Id = 'book_marvel';
-      const book2Text = `CHƯƠNG 1: XUYÊN QUA ĐẾN VŨ TRỤ MARVEL
-Trần Phong mở mắt ra, nhìn thấy tòa tháp Stark Tower rực rỡ ánh đèn neon giữa thành phố New York sầm uất.
-Hắn phát hiện mình vừa kích hoạt hệ thống bàn tay vàng có khả năng sao chép siêu năng lực.
-
-CHƯƠNG 2: CUỘC GẶP GỠ ĐẦU TIÊN
-Trên phố người qua lại tấp nập, tiếng còi xe inh ỏi. Một chiếc xe bọc thép bất ngờ lao tới với tốc độ kinh hoàng.`;
-
-      const book2Parsed = parseTxtContent(book2Text, { bookId: book2Id });
-
-      const book2: Book = {
-        id: book2Id,
-        title: 'nguoi-tai-marvel-ta-kim-thu-chi-la-chinh-ta_1-577.txt',
-        author: 'Mặc Hắc Dạ',
-        description: 'Xuyên qua vũ trụ Marvel sở hữu bàn tay vàng vô địch quét ngang chư thiên.',
-        language: 'vi',
-        coverImagePath: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&q=80&w=400',
-        totalChapters: 455,
-        lastReadChapterId: book2Parsed.chapters[1]?.id || book2Parsed.chapters[0].id,
-        lastReadPosition: 2,
-        lastReadSentenceIndex: 0,
-        listenCount: 88,
-        lastReadTime: new Date(Date.now() - 7200000).toISOString(),
-        sourceType: 'txt',
-        tags: ['Marvel', 'Xuyên không', 'Hệ thống'],
-        createdAt: '2026-09-28T08:12:00.000Z',
-        updatedAt: new Date().toISOString(),
-      };
-
-      const book3Id = 'book_dau_pha';
-      const book3Text = `CHƯƠNG 1: Ô THẢN THÀNH TIÊU GIA
-Tiêu Viêm ngồi trên mỏm đá nhìn bầu trời đêm mênh mông u ám. Đấu khí tiêu tán ba năm nay khiến hắn nếm trải đủ thói đời nóng lạnh.
-
-CHƯƠNG 2: DƯỢC LÃO TỈNH GIẤC
-Một làn khói đen mờ ảo từ trong chiếc nhẫn cổ xưa bay ra, mang theo giọng cười già nua bí ẩn.
-
-CHƯƠNG 3: HUÂN NHI ĐÊM ĐẾN THĂM
-Ánh trăng nhẹ nhàng rọi qua khung cửa sổ. Huân nhi mang theo trà nóng đến bên Tiêu Viêm mỉm cười dịu dàng an ủi.`;
-
-      const book3Parsed = parseTxtContent(book3Text, { bookId: book3Id });
-
-      const book3: Book = {
-        id: book3Id,
-        title: 'Nón xanh chi đấu phá thương khung (1-64 chương)',
-        author: 'Đấu Phá Đồng Nhân',
-        description: 'Tác phẩm chuyển thể phong cách mới đầy kịch tính tại đại lục Đấu Khí.',
-        language: 'vi',
-        coverImagePath: 'https://images.unsplash.com/photo-1532012164546-f432f2e3edd4?auto=format&fit=crop&q=80&w=400',
-        totalChapters: 163,
-        lastReadChapterId: book3Parsed.chapters[2]?.id || book3Parsed.chapters[0].id,
-        lastReadPosition: 3,
-        lastReadSentenceIndex: 0,
-        listenCount: 31,
-        lastReadTime: new Date(Date.now() - 14400000).toISOString(),
-        sourceType: 'txt',
-        tags: ['Đấu khí', 'Đồng nhân'],
-        createdAt: '2026-09-25T11:20:00.000Z',
-        updatedAt: new Date().toISOString(),
-      };
-
-      const book4Id = 'book_hokage';
-      const book4Text = `CHƯƠNG 1: LÀNG LÁ HẬU CHIẾN
-Cơn gió mang theo hương thơm của rừng thông thổi qua thung lũng Konoha.
-
-CHƯƠNG 2: HUẤN LUYỆN NHẪN THUẬT
-Boruto siết chặt dải băng trán, quyết tâm rèn luyện Rasengan biến dị.`;
-      const book4Parsed = parseTxtContent(book4Text, { bookId: book4Id });
-
-      const book4: Book = {
-        id: book4Id,
-        title: 'Xuyên qua Hokage thế giới biến thành Boruto (1-12 thiên)',
-        author: 'Hokage Đồng Nhân',
-        description: 'Hành trình khám phá thế giới Ninja với góc nhìn hoàn toàn mới lạ.',
-        language: 'vi',
-        coverImagePath: 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&q=80&w=400',
-        totalChapters: 123,
-        lastReadChapterId: book4Parsed.chapters[0].id,
-        lastReadPosition: 1,
-        lastReadSentenceIndex: 0,
-        listenCount: 95,
-        lastReadTime: new Date(Date.now() - 28800000).toISOString(),
-        sourceType: 'txt',
-        tags: ['Ninja', 'Hokage'],
-        createdAt: '2026-10-02T12:00:00.000Z',
-        updatedAt: new Date().toISOString(),
-      };
-
-      books = [book1, book2, book3, book4];
-      this.saveBooks(books);
-      this.saveChapters(book1Id, book1Parsed.chapters);
-      this.saveChapters(book2Id, book2Parsed.chapters);
-      this.saveChapters(book3Id, book3Parsed.chapters);
-      this.saveChapters(book4Id, book4Parsed.chapters);
-
-      // Seed initial per-book progress records
-      const initialProgressMap: Record<string, ReadingProgress> = {
-        [book1Id]: {
-          bookId: book1Id,
-          chapterId: book1Parsed.chapters[1]?.id || book1Parsed.chapters[0].id,
-          chapterIndex: 1,
-          chapterTitle: book1Parsed.chapters[1]?.title || 'Chương 2',
-          paragraphIndex: 1,
-          sentenceIndex: 0,
-          chunkIndex: 1,
-          playbackSeconds: 15,
-          status: 'in_progress',
-          lastReadAt: new Date(Date.now() - 3600000).toISOString(),
-        },
-        [book2Id]: {
-          bookId: book2Id,
-          chapterId: book2Parsed.chapters[1]?.id || book2Parsed.chapters[0].id,
-          chapterIndex: 1,
-          chapterTitle: book2Parsed.chapters[1]?.title || 'Chương 2',
-          paragraphIndex: 0,
-          sentenceIndex: 0,
-          chunkIndex: 0,
-          playbackSeconds: 0,
-          status: 'in_progress',
-          lastReadAt: new Date(Date.now() - 7200000).toISOString(),
-        },
-        [book3Id]: {
-          bookId: book3Id,
-          chapterId: book3Parsed.chapters[2]?.id || book3Parsed.chapters[0].id,
-          chapterIndex: 2,
-          chapterTitle: book3Parsed.chapters[2]?.title || 'Chương 3',
-          paragraphIndex: 0,
-          sentenceIndex: 0,
-          chunkIndex: 0,
-          playbackSeconds: 0,
-          status: 'in_progress',
-          lastReadAt: new Date(Date.now() - 14400000).toISOString(),
-        },
-        [book4Id]: {
-          bookId: book4Id,
-          chapterId: book4Parsed.chapters[0].id,
-          chapterIndex: 0,
-          chapterTitle: book4Parsed.chapters[0].title || 'Chương 1',
-          paragraphIndex: 0,
-          sentenceIndex: 0,
-          chunkIndex: 0,
-          playbackSeconds: 0,
-          status: 'not_started',
-          lastReadAt: new Date(Date.now() - 28800000).toISOString(),
-        },
-      };
+    // One-time clean migration: purge incomplete mock/test books and related chapters
+    if (!isCleaned) {
       try {
-        localStorage.setItem(STORAGE_KEYS.PROGRESS, JSON.stringify(initialProgressMap));
-      } catch {
-        // ignore
+        const rawOldBooks = localStorage.getItem(STORAGE_KEYS.BOOKS);
+        if (rawOldBooks) {
+          localStorage.setItem('lbook_library_backup_v3', rawOldBooks);
+        }
+        localStorage.removeItem(STORAGE_KEYS.BOOKS);
+
+        // Remove all localStorage chapter chunks
+        const keysToRemove: string[] = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && k.startsWith(STORAGE_KEYS.CHAPTERS_PREFIX)) {
+            keysToRemove.push(k);
+          }
+        }
+        keysToRemove.forEach((k) => localStorage.removeItem(k));
+
+        localStorage.setItem(STORAGE_KEYS.PROGRESS, '{}');
+        localStorage.setItem(STORAGE_KEYS.BOOKMARKS, '[]');
+        localStorage.setItem(STORAGE_KEYS.HISTORY, '[]');
+        localStorage.removeItem('storytts_db_initialized');
+
+        // Clear IndexedDB books and chapters stores
+        IndexedDbHelper.clearStore('books');
+        IndexedDbHelper.clearStore('chapters');
+
+        // Reset memory cache
+        memoryCache.books = [];
+        memoryCache.chapters.clear();
+      } catch (e) {
+        console.warn('Migration cleanup error:', e);
       }
+      localStorage.setItem(CLEAN_MIGRATION_KEY, 'true');
     }
 
-    // Hydrate memory cache
+    const books = this.getBooks();
     memoryCache.books = [...books];
 
     // Asynchronously sync from IndexedDB if any extra books exist
@@ -470,15 +331,54 @@ Boruto siết chặt dải băng trán, quyết tâm rèn luyện Rasengan biế
       } catch {
         // ignore
       }
-      IndexedDbHelper.deleteBook(b.id);
     }
+    IndexedDbHelper.clearStore('books');
+    IndexedDbHelper.clearStore('chapters');
     this.saveBooks([]);
     memoryCache.chapters.clear();
     this.saveBookmarks([]);
-    localStorage.setItem('storytts_db_initialized', 'true');
+    try {
+      localStorage.setItem(STORAGE_KEYS.PROGRESS, '{}');
+      localStorage.setItem(STORAGE_KEYS.HISTORY, '[]');
+    } catch {}
   }
 
   // --- Chapters ---
+  /**
+   * Asynchronously loads all chapters for a book from memory cache, localStorage, or IndexedDB.
+   * Guarantees complete chapter lists even for large novels that exceed localStorage quota.
+   */
+  static async loadChaptersAsync(bookId: string): Promise<Chapter[]> {
+    if (!bookId) return [];
+
+    // 1. In-memory cache is fastest
+    if (memoryCache.chapters.has(bookId)) {
+      const cached = memoryCache.chapters.get(bookId)!;
+      if (cached && cached.length > 0) return cached;
+    }
+
+    // 2. Try localStorage
+    try {
+      const data = localStorage.getItem(STORAGE_KEYS.CHAPTERS_PREFIX + bookId);
+      if (data) {
+        const list = JSON.parse(data);
+        if (Array.isArray(list) && list.length > 0) {
+          memoryCache.chapters.set(bookId, list);
+          return list;
+        }
+      }
+    } catch {}
+
+    // 3. Hydrate from IndexedDB
+    const idbChapters = await IndexedDbHelper.getChapters(bookId);
+    if (idbChapters && idbChapters.length > 0) {
+      memoryCache.chapters.set(bookId, idbChapters);
+      return idbChapters;
+    }
+
+    return [];
+  }
+
   static getChapters(bookId: string): Chapter[] {
     // 1. In-memory cache is fastest
     if (memoryCache.chapters.has(bookId)) {

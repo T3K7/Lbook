@@ -5,12 +5,10 @@ import { ProgressCoordinator } from './services/progressCoordinator';
 import { createChunksFromParagraphs } from './services/chunker';
 import { TtsAudioPipeline } from './services/tts/ttsAudioPipeline';
 import { ThemeProvider, useTheme } from './design-system/ThemeContext';
-import { PRESET_BACKGROUNDS } from './design-system/tokens';
 import { LanguageProvider, useTranslation } from './i18n';
 
 // Components
 import { BackgroundArtwork } from './components/BackgroundArtwork';
-import { TitleBar } from './components/TitleBar';
 import { Sidebar, NavView } from './components/Sidebar';
 import { TtsControlsBar } from './components/TtsControlsBar';
 import { LibraryView } from './components/LibraryView';
@@ -20,7 +18,6 @@ import { BackupRestoreView } from './components/BackupRestoreView';
 import { SettingsView } from './components/SettingsView';
 import { AudioDownloaderView } from './components/AudioDownloaderView';
 import { VoiceSelectorModal, VIETNAMESE_VOICE_CATALOG } from './components/VoiceSelectorModal';
-import { AppearanceModal } from './components/ui/AppearanceModal';
 
 function MainApp() {
   // Navigation & Data State
@@ -36,7 +33,6 @@ function MainApp() {
 
   // Modals
   const [showVoiceModal, setShowVoiceModal] = useState<boolean>(false);
-  const [showAppearanceModal, setShowAppearanceModal] = useState<boolean>(false);
 
   // Settings & Dictionaries
   const [settings, setSettings] = useState<AppSettings>(() => StorageService.getSettings());
@@ -85,18 +81,22 @@ function MainApp() {
 
     if (initActiveId) {
       setActiveBookId(initActiveId);
-      const chs = StorageService.getChapters(initActiveId);
-      setChapters(chs);
-      
-      const saved = StorageService.getProgress(initActiveId);
-      if (saved && chs.some((c) => c.id === saved.chapterId)) {
-        setCurrentChapterId(saved.chapterId);
-        setActiveParagraphIndex(saved.paragraphIndex);
-        setActiveSentenceIndex(saved.sentenceIndex);
-      } else if (chs.length > 0) {
-        const lastReadChId = initBooks[0]?.lastReadChapterId || chs[0].id;
-        setCurrentChapterId(lastReadChId);
-      }
+      StorageService.loadChaptersAsync(initActiveId).then((chs) => {
+        setChapters(chs);
+        const saved = StorageService.getProgress(initActiveId);
+        if (saved && chs.some((c) => c.id === saved.chapterId)) {
+          setCurrentChapterId(saved.chapterId);
+          setActiveParagraphIndex(saved.paragraphIndex);
+          setActiveSentenceIndex(saved.sentenceIndex);
+        } else if (chs.length > 0) {
+          const lastReadChId = initBooks[0]?.lastReadChapterId || chs[0].id;
+          setCurrentChapterId(lastReadChId);
+        }
+      });
+    } else {
+      setActiveBookId('');
+      setChapters([]);
+      setCurrentChapterId('');
     }
 
     // Subscribe to books changes from StorageService so all views update reactively immediately
@@ -330,7 +330,7 @@ function MainApp() {
     }
   };
 
-  const handleOpenBookDetail = (bookId: string) => {
+  const handleOpenBookDetail = async (bookId: string) => {
     // Flush current progress before switching book/view
     ProgressCoordinator.getInstance().flush();
 
@@ -338,7 +338,7 @@ function MainApp() {
     if (!book) return;
 
     setActiveBookId(bookId);
-    const chs = StorageService.getChapters(bookId);
+    const chs = await StorageService.loadChaptersAsync(bookId);
     setChapters(chs);
 
     const saved = StorageService.getProgress(bookId);
@@ -357,7 +357,7 @@ function MainApp() {
     setCurrentView('book-detail');
   };
 
-  const handleContinuePlay = (
+  const handleContinuePlay = async (
     bookId: string,
     chapterId: string,
     paragraphIndex: number = 0,
@@ -370,7 +370,7 @@ function MainApp() {
 
     // 2. Set active book and chapters
     setActiveBookId(bookId);
-    const chs = StorageService.getChapters(bookId);
+    const chs = await StorageService.loadChaptersAsync(bookId);
     setChapters(chs);
 
     // 3. New session ID token
@@ -413,11 +413,11 @@ function MainApp() {
     );
   };
 
-  const handleQuickPlayBook = (bookId: string) => {
+  const handleQuickPlayBook = async (bookId: string) => {
     const book = books.find((b) => b.id === bookId);
     if (!book) return;
 
-    const chs = StorageService.getChapters(bookId);
+    const chs = await StorageService.loadChaptersAsync(bookId);
     const saved = StorageService.getProgress(bookId);
 
     let targetChapterId = chs[0]?.id || '';
@@ -694,26 +694,7 @@ function MainApp() {
 
       {/* LAYER 3 & LAYER 4: Glass Surfaces & Content */}
       <div className="relative z-10 flex flex-col h-full w-full">
-        {/* 1. Title Bar */}
-        <TitleBar
-          activeViewTitle={
-            currentView === 'library'
-              ? t('nav.library')
-              : currentView === 'book-detail'
-              ? t('bookDetail.chaptersList', { count: chapters.length })
-              : currentView === 'reader'
-              ? t('nav.reader')
-              : currentView === 'audio-download'
-              ? t('nav.audioDownload')
-              : currentView === 'backup'
-              ? t('nav.backup')
-              : t('nav.settings')
-          }
-          activeBookTitle={activeBook?.title}
-          onOpenAppearanceModal={() => setShowAppearanceModal(true)}
-        />
-
-        {/* 2. Main Workspace Layout */}
+        {/* Main Workspace Layout */}
         <div className="flex-1 min-h-0 flex overflow-hidden">
           {/* Sidebar */}
           <Sidebar
@@ -876,12 +857,6 @@ function MainApp() {
           systemVoices={systemVoices}
           onSelectVoice={handleVoiceChange}
           onPreviewVoice={handlePreviewVoice}
-        />
-
-        {/* 5. Reading Theme & Appearance Modal */}
-        <AppearanceModal
-          isOpen={showAppearanceModal}
-          onClose={() => setShowAppearanceModal(false)}
         />
       </div>
     </div>

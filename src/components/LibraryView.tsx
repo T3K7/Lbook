@@ -283,8 +283,8 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
     }
   };
 
-  const handleExportTxt = (book: Book) => {
-    const chapters = StorageService.getChapters(book.id);
+  const handleExportTxt = async (book: Book) => {
+    const chapters = await StorageService.loadChaptersAsync(book.id);
     const content = BackupService.exportBookAsTxt(book, chapters);
     const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);

@@ -19,10 +19,10 @@ export const BackgroundArtwork: React.FC = () => {
     if (preset && preset.url) return preset.url;
     const custom = customBackgrounds.find((b) => b.id === backgroundImage);
     if (custom && custom.dataUrl) return custom.dataUrl;
-    if (backgroundImage.startsWith('data:') || backgroundImage.startsWith('/')) {
+    if (backgroundImage.startsWith('data:') || backgroundImage.startsWith('http')) {
       return backgroundImage;
     }
-    return '/src/assets/images/bg_fantasy_heroine_1791194675927.jpg';
+    return '';
   }, [backgroundImage, customBackgrounds]);
 
   if (!currentBgUrl) {

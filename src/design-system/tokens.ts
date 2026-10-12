@@ -118,18 +118,4 @@ export const PRESET_BACKGROUNDS: BackgroundPreset[] = [
     url: '',
     thumb: '',
   },
-  {
-    id: 'fantasy_heroine',
-    name: 'Tùy chỉnh (Nữ thần)',
-    description: 'Họa phẩm nữ hiệp huyễn tưởng',
-    url: '/src/assets/images/bg_fantasy_heroine_1791194675927.jpg',
-    thumb: '/src/assets/images/bg_fantasy_heroine_1791194675927.jpg',
-  },
-  {
-    id: 'emerald_silk',
-    name: 'Thanh lịch (Lụa ngọc)',
-    description: 'Lụa mềm ngọc bích ánh kim tinh tế',
-    url: '/src/assets/images/bg_emerald_silk_1791194655427.jpg',
-    thumb: '/src/assets/images/bg_emerald_silk_1791194655427.jpg',
-  },
 ];

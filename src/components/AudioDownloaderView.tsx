@@ -120,11 +120,14 @@ export const AudioDownloaderView: React.FC<AudioDownloaderViewProps> = ({
   // Load chapters of selected book
   const [chapters, setChapters] = useState<Chapter[]>([]);
   useEffect(() => {
+    let isCancelled = false;
     if (selectedBookId) {
-      const chs = StorageService.getChapters(selectedBookId);
-      setChapters(chs);
-      // Select all chapters of the story by default for intuitive 1-click batch download
-      setSelectedChapterIds(new Set(chs.map((c) => c.id)));
+      StorageService.loadChaptersAsync(selectedBookId).then((chs) => {
+        if (isCancelled) return;
+        setChapters(chs);
+        // Select all chapters of the story by default for intuitive 1-click batch download
+        setSelectedChapterIds(new Set(chs.map((c) => c.id)));
+      });
       setSearchChapterQuery('');
       if (previewAudioRef.current) {
         previewAudioRef.current.pause();
@@ -134,6 +137,9 @@ export const AudioDownloaderView: React.FC<AudioDownloaderViewProps> = ({
       setChapters([]);
       setSelectedChapterIds(new Set());
     }
+    return () => {
+      isCancelled = true;
+    };
   }, [selectedBookId]);
 
   // Selected chapters for download

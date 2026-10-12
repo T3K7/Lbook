@@ -22,6 +22,43 @@ export interface BackupPackage {
 
 export class BackupService {
   /**
+   * Generates a full .storytts backup JSON blob asynchronously ensuring all chapters are read from IndexedDB
+   */
+  static async createFullBackupAsync(): Promise<string> {
+    const books = StorageService.getBooks();
+    const chaptersMap: Record<string, Chapter[]> = {};
+
+    for (const b of books) {
+      chaptersMap[b.id] = await StorageService.loadChaptersAsync(b.id);
+    }
+
+    const bookmarks = StorageService.getBookmarks();
+    const dictionaries = StorageService.getDictionaries();
+    const settings = StorageService.getSettings();
+
+    const backup: BackupPackage = {
+      manifest: {
+        backupVersion: '1.0.0',
+        applicationVersion: '2.0.43-Desktop',
+        createdAt: new Date().toISOString(),
+        databaseVersion: 1,
+        appName: 'Lbook',
+        includedData: ['books', 'chapters', 'bookmarks', 'dictionaries', 'settings'],
+        bookCount: books.length,
+      },
+      data: {
+        books,
+        chaptersMap,
+        bookmarks,
+        dictionaries,
+        settings,
+      },
+    };
+
+    return JSON.stringify(backup, null, 2);
+  }
+
+  /**
    * Generates a full .storytts backup JSON blob
    */
   static createFullBackup(): string {
