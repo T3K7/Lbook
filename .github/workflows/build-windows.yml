@@ -34,18 +34,11 @@ jobs:
         run: |
           npm ci
 
-      - name: Verify TypeScript Package
-        shell: pwsh
+      - name: Verify Dependency Trees (TypeScript, Vite, Rolldown)
         run: |
           npm ls typescript
-          $tscExe = "node_modules/@typescript/typescript-win32-x64/tsc.exe"
-          if (!(Test-Path -Path $tscExe)) {
-            Write-Host "⚠️ Platform binary not found in node_modules, ensuring package installation..."
-            npm install @typescript/typescript-win32-x64@7.0.2 --no-save
-          }
-          if (Test-Path -Path $tscExe) {
-            Write-Host "✅ Verified $tscExe is present on disk."
-          }
+          npm ls vite
+          npm ls rolldown
 
       - name: Ensure Windows FFmpeg Binary
         shell: pwsh
