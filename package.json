@@ -15,10 +15,10 @@
     "build:renderer": "vite build",
     "build:electron": "node scripts/build-electron.mjs",
     "build:all": "npm run build:renderer && npm run build:electron",
-    "electron:build": "npm run build:all && electron-builder --win --config electron-builder.json",
-    "pack:win": "npm run build:all && electron-builder --win --config electron-builder.json",
-    "pack:portable": "npm run build:all && electron-builder --win portable --config electron-builder.json",
-    "pack:dir": "npm run build:all && electron-builder --win --dir --config electron-builder.json",
+    "electron:build": "npm run build:all && electron-builder --win --config electron-builder.json --publish never",
+    "pack:win": "npm run build:all && electron-builder --win --config electron-builder.json --publish never",
+    "pack:portable": "npm run build:all && electron-builder --win portable --config electron-builder.json --publish never",
+    "pack:dir": "npm run build:all && electron-builder --win --dir --config electron-builder.json --publish never",
     "electron:dev": "node scripts/build-electron.mjs && electron dist-electron/main.cjs"
   },
   "dependencies": {

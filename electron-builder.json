@@ -2,6 +2,7 @@
   "appId": "com.lbook.desktop",
   "productName": "Lbook",
   "copyright": "Copyright © 2026 Lbook Team",
+  "publish": null,
   "directories": {
     "output": "release",
     "buildResources": "build"
@@ -42,7 +43,6 @@
   "nsis": {
     "oneClick": false,
     "perMachine": false,
-    "differentialPackage": false,
     "allowToChangeInstallationDirectory": true,
     "createDesktopShortcut": true,
     "createStartMenuShortcut": true,
