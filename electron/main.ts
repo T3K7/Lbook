@@ -46,7 +46,8 @@ async function startBackend(): Promise<string> {
 
   // If in production packaged mode, serve the built Vite SPA static files directly
   if (!isDev) {
-    const staticDistPath = path.resolve(currentDirname, '..', 'dist');
+    const appRoot = app.isPackaged ? app.getAppPath() : path.resolve(currentDirname, '..');
+    const staticDistPath = path.resolve(appRoot, 'dist');
     expressApp.use(express.static(staticDistPath));
     expressApp.get('*', (_req, res) => {
       res.sendFile(path.resolve(staticDistPath, 'index.html'));
@@ -163,7 +164,8 @@ function createWindow() {
       .catch((err) => {
         console.error('Failed to connect to production internal backend:', err);
         // Fallback load file directly
-        const fallbackFile = path.resolve(currentDirname, '..', 'dist', 'index.html');
+        const appRoot = app.isPackaged ? app.getAppPath() : path.resolve(currentDirname, '..');
+        const fallbackFile = path.resolve(appRoot, 'dist', 'index.html');
         mainWindow?.loadFile(fallbackFile);
       });
   }

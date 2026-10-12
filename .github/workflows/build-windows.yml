@@ -1,0 +1,154 @@
+name: Build and Release Lbook for Windows
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-windows:
+    name: Build Windows Installer (x64)
+    runs-on: windows-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: |
+          npm ci || npm install --legacy-peer-deps
+
+      - name: Ensure Windows FFmpeg Binary
+        shell: pwsh
+        run: |
+          if (!(Test-Path -Path "bin")) {
+            New-Item -ItemType Directory -Force -Path "bin" | Out-Null
+          }
+          if (!(Test-Path -Path "bin/ffmpeg.exe")) {
+            $ffmpegCmd = Get-Command ffmpeg -ErrorAction SilentlyContinue
+            if ($ffmpegCmd -and (Test-Path -Path $ffmpegCmd.Source)) {
+              Copy-Item -Path $ffmpegCmd.Source -Destination "bin/ffmpeg.exe" -Force
+              $sizeMb = [math]::Round(((Get-Item "bin/ffmpeg.exe").Length / 1MB), 2)
+              Write-Host "✅ Copied system ffmpeg.exe ($sizeMb MB) to bin/ffmpeg.exe for packaging."
+            } else {
+              Write-Host "ℹ️ System ffmpeg not found; continuing with fallback resolver."
+            }
+          } else {
+            Write-Host "✅ bin/ffmpeg.exe already present."
+          }
+
+      - name: Verify Code Quality & Type Check
+        run: npm run lint
+
+      - name: Build Web Application & Electron Scripts
+        run: npm run build:all
+
+      - name: Verify Build Output Directories
+        shell: pwsh
+        run: |
+          if (!(Test-Path -Path "dist/index.html")) {
+            Write-Error "❌ dist/index.html is missing after build:renderer!"
+            exit 1
+          }
+          if (!(Test-Path -Path "dist-electron/main.cjs")) {
+            Write-Error "❌ dist-electron/main.cjs is missing after build:electron!"
+            exit 1
+          }
+          Write-Host "✅ dist/ and dist-electron/ verified successfully."
+
+      - name: Package Windows Installer & Portable Zip
+        run: npx electron-builder --win nsis zip --x64 --config electron-builder.json
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+
+      - name: Validate Generated Windows Executables
+        shell: pwsh
+        run: |
+          $setupExe = "release/Lbook-Setup.exe"
+          if (!(Test-Path -Path $setupExe)) {
+            Write-Error "❌ Fatal: $setupExe was not generated!"
+            exit 1
+          }
+          $setupSize = (Get-Item $setupExe).Length
+          if ($setupSize -le 100000) {
+            Write-Error "❌ Fatal: $setupExe is suspiciously small ($setupSize bytes). Packaging may have failed!"
+            exit 1
+          }
+          $setupSizeMb = [math]::Round(($setupSize / 1MB), 2)
+          Write-Host "✅ $setupExe verified successfully ($setupSizeMb MB)."
+
+          $zipFiles = Get-ChildItem -Path "release" -Filter "*.zip"
+          if ($zipFiles.Count -eq 0) {
+            Write-Error "❌ Fatal: No portable zip package found in release/!"
+            exit 1
+          }
+          foreach ($zip in $zipFiles) {
+            $zipSizeMb = [math]::Round(($zip.Length / 1MB), 2)
+            Write-Host "✅ $($zip.Name) verified ($zipSizeMb MB)."
+          }
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Lbook-Windows-Installer
+          path: |
+            release/Lbook-Setup.exe
+            release/*.zip
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Create Official GitHub Release (Tag Triggers Only)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release/Lbook-Setup.exe
+            release/*.zip
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          name: "Lbook ${{ github.ref_name }} (Windows)"
+          body: |
+            ## Lbook - Trình Đọc & Nghe Sách Thông Minh (Bản phát hành Windows)
+
+            Phiên bản phát hành chính thức dành cho hệ điều hành Windows 64-bit (Windows 10, Windows 11).
+
+            ---
+
+            ### 📦 Các tệp tải về:
+            - **`Lbook-Setup.exe`**: Bộ cài đặt tự động (NSIS). Tự động tạo biểu tượng ngoài Desktop và Menu Start.
+            - **`Lbook-*.zip`**: Bản Portable độc lập. Giải nén và mở `Lbook.exe` để sử dụng ngay mà không cần cài đặt.
+
+            ---
+
+            ### 🚀 Hướng dẫn cài đặt & sử dụng:
+            1. Tải file **`Lbook-Setup.exe`** về máy tính.
+            2. Nhấp đúp vào file để bắt đầu cài đặt:
+               - *Lưu ý*: Nếu Windows SmartScreen hiển thị cảnh báo ("Windows protected your PC"), hãy bấm **More info** (Thông tin thêm) $\rightarrow$ chọn **Run anyway** (Vẫn chạy). Điều này xảy ra do ứng dụng mã nguồn mở chưa đăng ký chứng chỉ thương mại EV Code Signing đắt tiền.
+            3. Chọn thư mục cài đặt mong muốn và hoàn tất.
+            4. Khởi động Lbook từ Desktop hoặc Start Menu để bắt đầu đọc sách và nghe đọc truyện TTS!
+
+            ---
+
+            ### ✨ Tính năng nổi bật:
+            - 📖 Đọc sách TXT & EPUB thông minh với công nghệ tách chương và phân đoạn đoạn văn tự động.
+            - 🎙️ Đường ống âm thanh TTS đa luồng (Google TTS, Edge Online TTS, Trình duyệt) có bộ đệm nạp trước (Prefetching).
+            - 🎯 Đồng bộ đánh dấu karaoke theo câu đang đọc theo thời gian thực.
+            - 🎵 Xuất trọn vẹn chương truyện thành tệp MP3 độc lập với công cụ tăng giảm tốc độ FFmpeg tích hợp sẵn.
+            - 🎨 Giao diện tùy biến cao cấp, hỗ trợ chế độ đọc ngày/đêm và hình nền động nghệ thuật.
