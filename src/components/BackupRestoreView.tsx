@@ -70,8 +70,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({ onDataRest
   };
 
   const handleResetToDefault = () => {
-    localStorage.clear();
-    StorageService.init();
+    StorageService.deleteAllBooks();
     onDataRestored();
     setShowConfirmResetModal(false);
     setStatusMessage({

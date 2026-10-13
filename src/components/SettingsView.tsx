@@ -21,6 +21,8 @@ import {
   Monitor,
   Github,
   ExternalLink,
+  AlertTriangle,
+  Library,
 } from 'lucide-react';
 import { AppSettings, TtsVoice } from '../types';
 import { DEFAULT_SETTINGS, StorageService } from '../services/storage';
@@ -28,22 +30,27 @@ import { useTheme } from '../design-system/ThemeContext';
 import { PRESET_BACKGROUNDS } from '../design-system/tokens';
 import { Card } from './ui/Card';
 import { Button } from './ui/Button';
+import { Modal } from './ui/Modal';
 import { useLanguage, SUPPORTED_LANGUAGES, Language } from '../i18n';
 
 interface SettingsViewProps {
   settings: AppSettings;
   voices: TtsVoice[];
   cacheStats: { hitRate: string; entriesCount: number; cacheHits: number; cacheMisses: number };
+  booksCount?: number;
   onUpdateSettings: (newSettings: Partial<AppSettings>) => void;
   onClearAudioCache: () => void;
+  onClearLibrary?: () => void;
 }
 
 export const SettingsView: React.FC<SettingsViewProps> = ({
   settings,
   voices,
   cacheStats,
+  booksCount = 0,
   onUpdateSettings,
   onClearAudioCache,
+  onClearLibrary,
 }) => {
   const [saveNotice, setSaveNotice] = useState(false);
   const {
@@ -65,6 +72,18 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const showBgToast = (type: 'success' | 'error', message: string) => {
     setBgToast({ type, message });
     setTimeout(() => setBgToast(null), 3500);
+  };
+
+  // Library Cleanup State
+  const [showClearLibraryModal, setShowClearLibraryModal] = useState(false);
+  const [libraryCleanToast, setLibraryCleanToast] = useState<string | null>(null);
+
+  const handleExecuteClearLibrary = () => {
+    StorageService.deleteAllBooks();
+    onClearLibrary?.();
+    setShowClearLibraryModal(false);
+    setLibraryCleanToast(t('settings.clearLibrarySuccess') || 'Đã dọn sạch toàn bộ truyện trong thư viện!');
+    setTimeout(() => setLibraryCleanToast(null), 4000);
   };
 
   const handleCustomBgUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -686,6 +705,40 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
           </Card>
 
+          {/* Section 5b: Library Data Management & Safe Purge */}
+          <Card padding="md">
+            <div className="flex items-center gap-2 text-sm font-bold text-[var(--text-primary)] border-b border-[var(--border)] pb-3 mb-4">
+              <Library className="w-4 h-4 text-[var(--accent)]" />
+              <span>{t('settings.librarySection') || 'Quản lý & Dọn dẹp thư viện'}</span>
+            </div>
+
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <div className="text-xs text-[var(--text-secondary)] font-medium">
+                  {t('settings.libraryBooksCount', { count: booksCount }) || `Hiện có: ${booksCount} truyện trong thư viện`}
+                </div>
+                <div className="text-xs text-[var(--text-muted)] mt-1 leading-relaxed">
+                  Dọn dẹp an toàn: Xóa toàn bộ truyện và chương đã lưu trên thiết bị. Giữ nguyên 100% cấu hình giọng đọc, API keys, giao diện và thiết lập cá nhân.
+                </div>
+                {libraryCleanToast && (
+                  <div className="mt-2 text-xs font-semibold text-[var(--accent)] flex items-center gap-1.5 animate-in fade-in">
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>{libraryCleanToast}</span>
+                  </div>
+                )}
+              </div>
+
+              <Button
+                variant="danger"
+                size="sm"
+                onClick={() => setShowClearLibraryModal(true)}
+                leftIcon={<Trash2 className="w-3.5 h-3.5" />}
+              >
+                {t('settings.clearLibraryBtn') || 'Dọn sạch toàn bộ truyện'}
+              </Button>
+            </div>
+          </Card>
+
           {/* Section 6: Windows Desktop Release & GitHub */}
           <Card padding="md">
             <div className="flex items-center gap-2 text-sm font-bold text-[var(--text-primary)] border-b border-[var(--border)] pb-3 mb-4">
@@ -741,6 +794,42 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           </Card>
         </div>
       </div>
+
+      {/* Clear Library Confirmation Modal */}
+      <Modal
+        isOpen={showClearLibraryModal}
+        onClose={() => setShowClearLibraryModal(false)}
+        title={t('settings.clearLibraryModalTitle') || 'Xác nhận xóa sạch toàn bộ thư viện'}
+        maxWidth="sm"
+      >
+        <div className="space-y-4">
+          <div className="w-12 h-12 rounded-2xl bg-[var(--danger-soft)] text-[var(--danger)] flex items-center justify-center mx-auto">
+            <AlertTriangle className="w-6 h-6" />
+          </div>
+
+          <p className="text-xs text-[var(--text-secondary)] text-center leading-relaxed">
+            {t('settings.clearLibraryModalDesc') ||
+              'Hành động này sẽ xóa vĩnh viễn toàn bộ sách, danh sách chương, lịch sử đọc và dấu trang khỏi thiết bị này. Toàn bộ cấu hình cá nhân (giọng đọc, giao diện, phông chữ, API keys) sẽ được GIỮ NGUYÊN HOÀN TOÀN. Bạn có chắc chắn muốn xóa không?'}
+          </p>
+
+          <div className="flex items-center gap-3 pt-2">
+            <Button
+              variant="secondary"
+              className="flex-1"
+              onClick={() => setShowClearLibraryModal(false)}
+            >
+              {t('common.cancel') || 'Hủy bỏ'}
+            </Button>
+            <Button
+              variant="danger"
+              className="flex-1"
+              onClick={handleExecuteClearLibrary}
+            >
+              {t('settings.clearLibraryBtn') || 'Xóa toàn bộ truyện'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

@@ -675,8 +675,21 @@ function MainApp() {
   const refreshAllData = () => {
     const storedBooks = StorageService.getBooks();
     setBooks([...storedBooks]);
-    if (activeBookId) {
+    if (storedBooks.length === 0) {
+      setActiveBookId('');
+      setChapters([]);
+      setCurrentChapterId('');
+      if (pipelineRef.current) {
+        pipelineRef.current.stop();
+      }
+    } else if (activeBookId && storedBooks.some((b) => b.id === activeBookId)) {
       setChapters(StorageService.getChapters(activeBookId));
+    } else {
+      const firstId = storedBooks[0]?.id || '';
+      setActiveBookId(firstId);
+      if (firstId) {
+        setChapters(StorageService.getChapters(firstId));
+      }
     }
     setDictionaries(StorageService.getDictionaries());
   };
@@ -801,8 +814,10 @@ function MainApp() {
                   gender: v.gender,
                 }))}
                 cacheStats={cacheStats}
+                booksCount={books.length}
                 onUpdateSettings={handleUpdateSettings}
                 onClearAudioCache={handleClearAudioCache}
+                onClearLibrary={refreshAllData}
               />
             )}
           </main>

@@ -1,11 +1,72 @@
+# Dependencies
 node_modules/
+.pnp
+.pnp.js
+
+# Production & Build Artifacts
 build/
 dist/
 dist-electron/
 release/
 coverage/
-.DS_Store
-*.log
-build.log
+
+# Environment Variables & Secrets (NEVER push credentials or keys)
 .env*
 !.env.example
+
+# User Story & Novel Data Files (Prevents committing any personal novel files)
+*.txt
+!bin/README.txt
+*.epub
+*.storytts
+*.pdf
+*.mobi
+*.azw3
+*.fb2
+
+# Audio Export & Audio Cache Files
+*.mp3
+*.wav
+*.ogg
+*.m4a
+*.flac
+*.aac
+
+# Archives & Temporary Packaging
+*.zip
+*.tar
+*.tar.gz
+*.7z
+*.rar
+
+# Databases & Runtime Storage
+*.sqlite
+*.sqlite3
+*.db
+*.idb
+data/
+storage/
+novels/
+books/
+uploads/
+cache/
+tmp/
+temp/
+
+# Logs & Diagnostics
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+build.log
+
+# System & IDE Files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln.docstates
+

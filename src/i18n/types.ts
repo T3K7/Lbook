@@ -174,6 +174,13 @@ export interface Translations {
     chaptersSelectedCount: string;
     first10Chapters: string;
     first50Chapters: string;
+    next10Chapters?: string;
+    fromChapter?: string;
+    toChapter?: string;
+    applyRange?: string;
+    shiftClickHint?: string;
+    selectChaptersPromptZip?: string;
+    selectChaptersPromptMp3?: string;
     voiceLabel: string;
     speedLabel: string;
     formatLabel: string;
@@ -285,6 +292,12 @@ export interface Translations {
     imageDuplicateNotice: string;
     customImageAdded: string;
     customTag: string;
+    librarySection?: string;
+    libraryBooksCount?: string;
+    clearLibraryBtn?: string;
+    clearLibraryModalTitle?: string;
+    clearLibraryModalDesc?: string;
+    clearLibrarySuccess?: string;
   };
   appearanceModal: {
     title: string;
@@ -332,5 +345,12 @@ export interface Translations {
     dangerZone: string;
     cancel: string;
     confirmReset: string;
+    purgeLibraryTitle?: string;
+    purgeLibraryDesc?: string;
+    purgeLibraryBtn?: string;
+    confirmPurgeTitle?: string;
+    confirmPurgeDesc?: string;
+    confirmPurge?: string;
+    purgeSuccess?: string;
   };
 }

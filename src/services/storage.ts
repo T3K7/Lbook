@@ -169,23 +169,21 @@ export class StorageService {
    * Does NOT generate sample books, ensuring user starts with a pristine library.
    */
   static init(): { books: Book[]; activeBookId: string } {
-    const CLEAN_MIGRATION_KEY = 'lbook_library_cleaned_v4';
+    const CLEAN_MIGRATION_KEY = 'lbook_library_cleaned_v6';
     const isCleaned = localStorage.getItem(CLEAN_MIGRATION_KEY);
 
-    // One-time clean migration: purge incomplete mock/test books and related chapters
+    // Clean migration: purge any previous development/test books and stray chapter keys
     if (!isCleaned) {
       try {
-        const rawOldBooks = localStorage.getItem(STORAGE_KEYS.BOOKS);
-        if (rawOldBooks) {
-          localStorage.setItem('lbook_library_backup_v3', rawOldBooks);
-        }
         localStorage.removeItem(STORAGE_KEYS.BOOKS);
+        localStorage.removeItem('lbook_library_backup_v3');
+        localStorage.removeItem('lbook_library_backup_v2');
 
         // Remove all localStorage chapter chunks
         const keysToRemove: string[] = [];
         for (let i = 0; i < localStorage.length; i++) {
           const k = localStorage.key(i);
-          if (k && k.startsWith(STORAGE_KEYS.CHAPTERS_PREFIX)) {
+          if (k && (k.startsWith(STORAGE_KEYS.CHAPTERS_PREFIX) || k.startsWith('lbook_library_backup_'))) {
             keysToRemove.push(k);
           }
         }
@@ -332,6 +330,17 @@ export class StorageService {
         // ignore
       }
     }
+    try {
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && (k.startsWith(STORAGE_KEYS.CHAPTERS_PREFIX) || k.startsWith('lbook_library_backup_'))) {
+          keysToRemove.push(k);
+        }
+      }
+      keysToRemove.forEach((k) => localStorage.removeItem(k));
+    } catch {}
+
     IndexedDbHelper.clearStore('books');
     IndexedDbHelper.clearStore('chapters');
     this.saveBooks([]);
@@ -340,6 +349,8 @@ export class StorageService {
     try {
       localStorage.setItem(STORAGE_KEYS.PROGRESS, '{}');
       localStorage.setItem(STORAGE_KEYS.HISTORY, '[]');
+      localStorage.removeItem('lbook_library_backup_v3');
+      localStorage.removeItem('lbook_library_backup_v2');
     } catch {}
   }
 

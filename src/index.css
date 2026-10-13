@@ -130,9 +130,9 @@
 
   /* High-contrast crisp typography on dark glass (brilliant white and light slate) */
   --text-primary: #FFFFFF;
-  --text-secondary: #F1F5F9;
-  --text-muted: #CBD5E1;
-  --text-disabled: #94A3B8;
+  --text-secondary: #F8FAFC;
+  --text-muted: #E2E8F0;
+  --text-disabled: #CBD5E1;
 
   --border: var(--glass-border);
   --border-subtle: var(--glass-border-subtle);
