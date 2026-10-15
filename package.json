@@ -12,6 +12,8 @@
     "start": "tsx server.ts",
     "clean": "rm -rf dist dist-electron release server.js",
     "lint": "tsc --noEmit",
+    "check:docs": "node scripts/check-docs.mjs",
+    "lint:docs": "node scripts/check-docs.mjs",
     "build:renderer": "vite build",
     "build:electron": "node scripts/build-electron.mjs",
     "build:all": "npm run build:renderer && npm run build:electron",
