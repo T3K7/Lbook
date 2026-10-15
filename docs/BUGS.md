@@ -20,6 +20,7 @@
 | **`BUG-001`** | **Giao diện sáng (Light Mode) bị tối thẫm ở trang Tải âm thanh** | `HIGH` | `src/components/AudioDownloaderView.tsx` | `FIXED` | [`bugs/BUG-001.md`](./bugs/BUG-001.md) |
 | **`BUG-002`** | **Nguy cơ trùng âm thanh khi nhấp tua câu liên tục trong Reader** | `HIGH` | `src/services/tts/globalAudioGuard.ts` | `FIXED` | [`files/src__services__tts__globalAudioGuard.ts.md`](./files/src__services__tts__globalAudioGuard.ts.md) |
 | **`BUG-003`** | **Đầy bộ nhớ LocalStorage 5MB khi nạp truyện dài hàng trăm chương** | `CRITICAL`| `src/services/storage.ts` | `FIXED` | [`files/src__services__storage.ts.md`](./files/src__services__storage.ts.md) |
+| **`BUG-004`** | **Lỗi chọn và nghe thử bộ sưu tập giọng đọc tiếng Việt phát cùng một giọng** | `HIGH` | `src/components/VoiceSelectorModal.tsx` | `FIXED` | [`bugs/BUG-004.md`](./bugs/BUG-004.md) |
 
 ---
 

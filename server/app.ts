@@ -76,8 +76,8 @@ function applyTempoToMp3Buffer(inputBuffer: Buffer, speed: number): Promise<Buff
   });
 }
 
-function fetchGoogleTtsBaseBuffer(text: string, lang: string): Promise<Buffer> {
-  const baseKey = `base_${lang}_${text}`;
+function fetchGoogleTtsBaseBuffer(text: string, lang: string, voice: string = 'vi-VN-default'): Promise<Buffer> {
+  const baseKey = `base_${lang}_${voice}_${text}`;
   const cached = ttsBufferCache.get(baseKey);
   if (cached) return Promise.resolve(cached);
 
@@ -212,6 +212,7 @@ export function createExpressApp(): Express {
   app.get('/api/tts/google', async (req, res) => {
     const text = ((req.query.text as string) || (req.query.q as string) || '').trim();
     const lang = (req.query.lang as string) || (req.query.tl as string) || 'vi';
+    const voice = ((req.query.voice as string) || 'vi-VN-default').trim();
     const rawSpeed = parseFloat((req.query.speed as string) || (req.query.rate as string) || '1.0');
     const speed = isNaN(rawSpeed) || rawSpeed <= 0 ? 1.0 : rawSpeed;
 
@@ -221,22 +222,23 @@ export function createExpressApp(): Express {
     }
 
     const speedStr = speed.toFixed(2);
-    const cacheKey = `tts_${lang}_rate${speedStr}_${text}`;
+    const cacheKey = `tts_${lang}_${voice}_rate${speedStr}_${text}`;
 
-    // 1. Check if processed audio for this speed is already in cache
+    // 1. Check if processed audio for this speed and voice is already in cache
     const cached = ttsBufferCache.get(cacheKey);
     if (cached) {
       res.setHeader('Content-Type', 'audio/mpeg');
       res.setHeader('Cache-Control', 'public, max-age=86400');
       res.setHeader('X-Audio-Speed', speedStr);
+      res.setHeader('X-Audio-Voice', voice);
       res.setHeader('X-Cache', 'HIT');
       res.send(cached);
       return;
     }
 
     try {
-      // 2. Fetch or retrieve 1.0x base audio
-      const baseBuffer = await fetchGoogleTtsBaseBuffer(text, lang);
+      // 2. Fetch or retrieve 1.0x base audio for this voice
+      const baseBuffer = await fetchGoogleTtsBaseBuffer(text, lang, voice);
 
       // 3. If speed is 1.0x, return directly
       if (Math.abs(speed - 1.0) < 0.01) {

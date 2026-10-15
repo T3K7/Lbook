@@ -1,6 +1,6 @@
 {
   "name": "lbook",
-  "version": "0.0.1",
+  "version": "0.1.1",
   "description": "Lbook - Trình Đọc & Nghe Sách Thông Minh",
   "author": "Lbook Team",
   "private": true,
@@ -14,6 +14,7 @@
     "lint": "tsc --noEmit",
     "check:docs": "node scripts/check-docs.mjs",
     "lint:docs": "node scripts/check-docs.mjs",
+    "test:voice": "node scripts/test-voice-selection.mjs",
     "build:renderer": "vite build",
     "build:electron": "node scripts/build-electron.mjs",
     "build:all": "npm run build:renderer && npm run build:electron",

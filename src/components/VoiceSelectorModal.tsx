@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Play, Pause, Sparkles } from 'lucide-react';
+import { Search, Play, Pause, Sparkles, AlertCircle, Info, X } from 'lucide-react';
 import { TtsVoice } from '../types';
 import { AudioPreviewManager } from '../services/tts/audioPreviewManager';
 import { Modal } from './ui/Modal';
@@ -24,6 +24,8 @@ export interface VoiceItem {
   lang: string;
   gender: 'female' | 'male';
   desc: string;
+  status: 'ready' | 'requires_key' | 'requires_install' | 'maintenance';
+  statusNote: string;
 }
 
 export const VIETNAMESE_VOICE_CATALOG: VoiceItem[] = [
@@ -36,42 +38,52 @@ export const VIETNAMESE_VOICE_CATALOG: VoiceItem[] = [
     lang: 'vi-VN',
     gender: 'female',
     desc: 'Giọng đọc Google chuẩn xác, rõ ràng, phát âm tự nhiên nhất cho tiểu thuyết',
+    status: 'ready',
+    statusNote: 'Sẵn sàng trực tuyến',
   },
   {
     provider: 'google',
-    providerName: 'Google',
+    providerName: 'Google Cloud',
     id: 'vi-VN-Standard-A',
     name: 'Google Tiếng Việt (Nữ Truyền Cảm)',
     lang: 'vi-VN',
     gender: 'female',
     desc: 'Âm sắc ấm áp, thích hợp cho truyện ngôn tình, tiên hiệp, đô thị',
+    status: 'requires_key',
+    statusNote: 'Cần Google Cloud API Key',
   },
   {
     provider: 'google',
-    providerName: 'Google',
+    providerName: 'Google Cloud',
     id: 'vi-VN-Standard-B',
     name: 'Google Tiếng Việt (Nam Trầm)',
     lang: 'vi-VN',
     gender: 'male',
     desc: 'Giọng nam trầm ấm, phát âm mạnh mẽ, thích hợp truyện kiếm hiệp, lịch sử',
+    status: 'requires_key',
+    statusNote: 'Cần Google Cloud API Key',
   },
   {
     provider: 'google',
-    providerName: 'Google',
+    providerName: 'Google Cloud',
     id: 'vi-VN-Standard-C',
     name: 'Google Tiếng Việt (Nữ Nhẹ Nhàng)',
     lang: 'vi-VN',
     gender: 'female',
     desc: 'Giọng đọc thanh thoát, tốc độ vừa phải, dễ chịu khi nghe lâu',
+    status: 'requires_key',
+    statusNote: 'Cần Google Cloud API Key',
   },
   {
     provider: 'google',
-    providerName: 'Google',
+    providerName: 'Google Cloud',
     id: 'vi-VN-Standard-D',
     name: 'Google Tiếng Việt (Nam Hào Sảng)',
     lang: 'vi-VN',
     gender: 'male',
     desc: 'Giọng đọc dứt khoát, âm vực cao, phù hợp các chương hành động',
+    status: 'requires_key',
+    statusNote: 'Cần Google Cloud API Key',
   },
 
   // Microsoft Edge Neural Voices
@@ -83,6 +95,8 @@ export const VIETNAMESE_VOICE_CATALOG: VoiceItem[] = [
     lang: 'vi-VN',
     gender: 'male',
     desc: 'Nam Minh — Giọng đọc Neural cao cấp, diễn cảm truyền thanh chuyên nghiệp',
+    status: 'requires_install',
+    statusNote: 'Cần Windows SAPI / Edge',
   },
   {
     provider: 'microsoft',
@@ -92,6 +106,8 @@ export const VIETNAMESE_VOICE_CATALOG: VoiceItem[] = [
     lang: 'vi-VN',
     gender: 'female',
     desc: 'Hoài My — Giọng đọc Neural dịu dàng, tự nhiên như người thật',
+    status: 'requires_install',
+    statusNote: 'Cần Windows SAPI / Edge',
   },
 
   // TikTok Voices
@@ -103,6 +119,8 @@ export const VIETNAMESE_VOICE_CATALOG: VoiceItem[] = [
     lang: 'vi-VN',
     gender: 'female',
     desc: 'Giọng đọc TikTok viral, tươi tắn, nhấn nhá thu hút',
+    status: 'maintenance',
+    statusNote: 'Đang bảo trì API',
   },
   {
     provider: 'tiktok',
@@ -112,6 +130,8 @@ export const VIETNAMESE_VOICE_CATALOG: VoiceItem[] = [
     lang: 'vi-VN',
     gender: 'male',
     desc: 'Giọng đọc tin tức TikTok phong cách phóng sự',
+    status: 'maintenance',
+    statusNote: 'Đang bảo trì API',
   },
 ];
 
@@ -131,13 +151,35 @@ export const VoiceSelectorModal: React.FC<VoiceSelectorModalProps> = ({
   const [tempVoiceId, setTempVoiceId] = useState(activeVoiceId || 'vi-VN-default');
   const [tempProviderId, setTempProviderId] = useState(activeProviderId || 'google');
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
+  const [notice, setNotice] = useState<{ type: 'info' | 'warning' | 'error'; message: string } | null>(null);
 
+  // Synchronize temporary selection and active tab with currently applied settings whenever modal opens
   useEffect(() => {
-    if (!isOpen) {
+    if (isOpen) {
+      setTempVoiceId(activeVoiceId || 'vi-VN-default');
+      setTempProviderId(activeProviderId || 'google');
+      setNotice(null);
+
+      if (activeProviderId === 'browser') {
+        setActiveTab('offline');
+      } else if (activeProviderId === 'offline-ai') {
+        setActiveTab('ai');
+      } else {
+        setActiveTab('online');
+        if (activeProviderId === 'edge-online' || activeVoiceId?.includes('Neural')) {
+          setSelectedProvider('microsoft');
+        } else if (activeVoiceId?.includes('tiktok')) {
+          setSelectedProvider('tiktok');
+        } else {
+          setSelectedProvider('google');
+        }
+      }
+    } else {
       AudioPreviewManager.getInstance().stopAll();
       setPlayingVoiceId(null);
+      setNotice(null);
     }
-  }, [isOpen]);
+  }, [isOpen, activeVoiceId, activeProviderId]);
 
   if (!isOpen) return null;
 
@@ -153,15 +195,26 @@ export const VoiceSelectorModal: React.FC<VoiceSelectorModalProps> = ({
     return true;
   });
 
+  const handleCancel = () => {
+    AudioPreviewManager.getInstance().stopAll();
+    setPlayingVoiceId(null);
+    setNotice(null);
+    setTempVoiceId(activeVoiceId || 'vi-VN-default');
+    setTempProviderId(activeProviderId || 'google');
+    onClose();
+  };
+
   const handleApply = () => {
     AudioPreviewManager.getInstance().stopAll();
     setPlayingVoiceId(null);
+    setNotice(null);
     onSelectVoice(tempProviderId, tempVoiceId);
     onClose();
   };
 
   const handlePreview = (e: React.MouseEvent, voiceId: string, provider: string) => {
     e.stopPropagation();
+    setNotice(null);
     const sampleText =
       'Xin chào bạn, đây là giọng đọc tiếng Việt của Lbook. Chúc bạn có trải nghiệm nghe truyện thật tuyệt vời.';
 
@@ -170,22 +223,37 @@ export const VoiceSelectorModal: React.FC<VoiceSelectorModalProps> = ({
       provider,
       sampleText,
       () => setPlayingVoiceId(voiceId),
-      () => setPlayingVoiceId(null)
+      () => setPlayingVoiceId(null),
+      (errMsg) => {
+        setPlayingVoiceId(null);
+        setNotice({ type: 'warning', message: errMsg });
+      }
     );
   };
 
   return (
     <Modal
       isOpen={isOpen}
-      onClose={() => {
-        AudioPreviewManager.getInstance().stopAll();
-        setPlayingVoiceId(null);
-        onClose();
-      }}
+      onClose={handleCancel}
       title={t('voiceModal.title')}
       maxWidth="lg"
     >
       <div className="space-y-4 text-[var(--text-primary)]">
+        {/* Notice Alert Banner */}
+        {notice && (
+          <div className="flex items-start gap-2.5 p-3 rounded-xl text-xs bg-amber-500/10 border border-amber-500/30 text-amber-300">
+            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-amber-400" />
+            <div className="flex-1 font-medium leading-relaxed">{notice.message}</div>
+            <button
+              onClick={() => setNotice(null)}
+              className="text-amber-400 hover:text-white cursor-pointer ml-1"
+              title="Đóng"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
+
         {/* Mode Tabs */}
         <div className="flex p-1 bg-[var(--bg-surface-secondary)] rounded-xl border border-[var(--border)]">
           <button
@@ -273,7 +341,7 @@ export const VoiceSelectorModal: React.FC<VoiceSelectorModalProps> = ({
                   AudioPreviewManager.getInstance().stopAll();
                   setPlayingVoiceId(null);
                   setSelectedProvider('tiktok');
-                  setTempProviderId('google');
+                  setTempProviderId('tiktok');
                   setTempVoiceId('vi-VN-tiktok-female');
                 }}
                 className={`px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-all cursor-pointer ${
@@ -309,7 +377,8 @@ export const VoiceSelectorModal: React.FC<VoiceSelectorModalProps> = ({
                     key={voice.id}
                     onClick={() => {
                       setTempVoiceId(voice.id);
-                      setTempProviderId(voice.provider === 'microsoft' ? 'edge-online' : 'google');
+                      const resolvedProvider = voice.provider === 'microsoft' ? 'edge-online' : (voice.provider === 'tiktok' ? 'tiktok' : 'google');
+                      setTempProviderId(resolvedProvider);
                     }}
                     className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
                       isSelected
@@ -318,12 +387,25 @@ export const VoiceSelectorModal: React.FC<VoiceSelectorModalProps> = ({
                     }`}
                   >
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-xs font-bold text-[var(--text-primary)]">
                           {voice.name}
                         </span>
                         <span className="text-[10px] text-[var(--accent)] font-mono font-semibold bg-[var(--accent-soft)] px-1.5 py-0.5 rounded border border-[var(--accent-border)]">
                           {voice.lang}
+                        </span>
+                        <span
+                          className={`text-[9px] font-semibold px-2 py-0.5 rounded-full border ${
+                            voice.status === 'ready'
+                              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                              : voice.status === 'requires_key'
+                              ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+                              : voice.status === 'requires_install'
+                              ? 'bg-blue-500/10 text-blue-400 border-blue-500/30'
+                              : 'bg-zinc-500/10 text-zinc-400 border-zinc-500/30'
+                          }`}
+                        >
+                          {voice.statusNote}
                         </span>
                       </div>
                       <div className="text-[11px] text-[var(--text-secondary)] font-medium mt-0.5 truncate">
@@ -451,7 +533,10 @@ export const VoiceSelectorModal: React.FC<VoiceSelectorModalProps> = ({
         <div className="pt-3 border-t border-[var(--border)] flex items-center justify-between">
           <div className="text-xs text-[var(--text-secondary)] truncate max-w-xs">
             {t('voiceModal.currentSelection', {
-              voice: VIETNAMESE_VOICE_CATALOG.find((v) => v.id === tempVoiceId)?.name || tempVoiceId,
+              voice:
+                VIETNAMESE_VOICE_CATALOG.find((v) => v.id === tempVoiceId)?.name ||
+                systemVoices.find((v) => v.id === tempVoiceId)?.name ||
+                tempVoiceId,
             })}
           </div>
 
@@ -459,11 +544,7 @@ export const VoiceSelectorModal: React.FC<VoiceSelectorModalProps> = ({
             <Button
               variant="secondary"
               size="sm"
-              onClick={() => {
-                AudioPreviewManager.getInstance().stopAll();
-                setPlayingVoiceId(null);
-                onClose();
-              }}
+              onClick={handleCancel}
             >
               {t('common.cancel')}
             </Button>

@@ -63,12 +63,13 @@ export class GoogleTtsProvider implements ITtsProvider {
     const wordsCount = cleanText.split(/\s+/).length;
     const durationEstimateMs = Math.max(600, Math.round((wordsCount / (140 * options.rate)) * 60 * 1000));
 
-    // Construct Audio URL via our server-side proxy (supports speed stretching)
+    // Construct Audio URL via our server-side proxy (supports speed stretching and voice isolation)
+    const voiceParam = options.voice ? `&voice=${encodeURIComponent(options.voice)}` : '&voice=vi-VN-default';
     const speedParam =
       typeof options.rate === 'number' && Math.abs(options.rate - 1.0) >= 0.01
         ? `&speed=${options.rate.toFixed(2)}`
         : '';
-    const audioUrl = `/api/tts/google?text=${encodeURIComponent(cleanText)}&lang=vi${speedParam}`;
+    const audioUrl = `/api/tts/google?text=${encodeURIComponent(cleanText)}&lang=vi${voiceParam}${speedParam}`;
 
     return {
       audioUrl,

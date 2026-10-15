@@ -77,7 +77,8 @@ export class AudioPreviewManager {
     provider: string,
     sampleText: string,
     onStart?: () => void,
-    onEnd?: () => void
+    onEnd?: () => void,
+    onError?: (errorMessage: string) => void
   ): void {
     // 1. HARD STOP previous preview and any other audio immediately
     GlobalAudioGuard.getInstance().stopEverything();
@@ -91,8 +92,6 @@ export class AudioPreviewManager {
       this.onEndCallbacks.set(reqId, onEnd);
     }
 
-    onStart?.();
-
     const finish = () => {
       if (reqId === this.currentRequestId) {
         if (this.currentAudio) {
@@ -105,70 +104,139 @@ export class AudioPreviewManager {
       }
     };
 
-    // Google Online Vietnamese Voice Stream
+    // --- Provider Branch 1: Google TTS ---
     if (provider === 'google' || provider.toLowerCase().includes('google')) {
-      const audioUrl = `/api/tts/google?text=${encodeURIComponent(sampleText)}&lang=vi&voice=${encodeURIComponent(voiceId)}`;
-      const audio = new Audio();
-      this.currentAudio = audio;
-      GlobalAudioGuard.getInstance().registerAudio(audio);
+      if (voiceId === 'vi-VN-default') {
+        const audioUrl = `/api/tts/google?text=${encodeURIComponent(sampleText)}&lang=vi&voice=${encodeURIComponent(voiceId)}`;
+        const audio = new Audio();
+        this.currentAudio = audio;
+        GlobalAudioGuard.getInstance().registerAudio(audio);
 
-      audio.onended = () => {
-        finish();
-      };
+        audio.onended = () => {
+          finish();
+        };
 
-      audio.onerror = () => {
-        if (reqId !== this.currentRequestId) return;
-        // Fallback to speech synthesis if audio stream fails
-        this.fallbackSpeechSynthesis(sampleText, reqId, voiceId, finish);
-      };
+        audio.onerror = () => {
+          if (reqId !== this.currentRequestId) return;
+          finish();
+          onError?.('Không thể kết nối đến máy chủ Google TTS. Vui lòng kiểm tra mạng.');
+        };
 
-      audio.src = audioUrl;
-      audio.play().catch(() => {
-        if (reqId === this.currentRequestId) {
-          this.fallbackSpeechSynthesis(sampleText, reqId, voiceId, finish);
-        }
-      });
-    } else {
-      // SpeechSynthesis for Browser/Windows voices
-      this.fallbackSpeechSynthesis(sampleText, reqId, voiceId, finish);
-    }
-  }
+        audio.src = audioUrl;
+        audio.play().then(() => {
+          if (reqId === this.currentRequestId) {
+            onStart?.();
+          }
+        }).catch((err) => {
+          if (reqId === this.currentRequestId) {
+            finish();
+            onError?.(`Lỗi phát âm thanh Google TTS: ${err.message || 'Không thể phát'}`);
+          }
+        });
+        return;
+      }
 
-  private fallbackSpeechSynthesis(
-    text: string,
-    reqId: number,
-    voiceId: string,
-    finish: () => void
-  ): void {
-    if (typeof window === 'undefined' || !window.speechSynthesis) {
+      // Other Google Cloud Standard voices require dedicated GCP credentials
       finish();
+      onError?.(`Giọng đọc "${voiceId}" thuộc gói Google Cloud TTS (yêu cầu API Key). Ứng dụng hiện hỗ trợ chính thức giọng chuẩn Google Tiếng Việt (vi-VN-default).`);
       return;
     }
 
-    try {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'vi-VN';
-
-      const voices = window.speechSynthesis.getVoices();
-      if (voiceId) {
-        const matched = voices.find(
-          (v) => v.voiceURI === voiceId || v.name === voiceId || v.lang.toLowerCase().includes('vi')
-        );
-        if (matched) utterance.voice = matched;
+    // --- Provider Branch 2: Microsoft Neural TTS ---
+    if (provider === 'microsoft' || provider === 'edge-online') {
+      if (typeof window === 'undefined' || !window.speechSynthesis) {
+        finish();
+        onError?.('Trình duyệt hoặc hệ thống không hỗ trợ Web SpeechSynthesis.');
+        return;
       }
 
-      utterance.onend = () => {
-        finish();
-      };
+      const voices = window.speechSynthesis.getVoices();
+      const matched = voices.find((v) =>
+        v.voiceURI === voiceId ||
+        v.name === voiceId ||
+        (voiceId.includes('NamMinh') && v.name.includes('NamMinh')) ||
+        (voiceId.includes('HoaiMy') && v.name.includes('HoaiMy')) ||
+        (voiceId.includes('Jenny') && v.name.includes('Jenny')) ||
+        (voiceId.includes('Guy') && v.name.includes('Guy'))
+      );
 
-      utterance.onerror = () => {
-        finish();
-      };
+      if (matched) {
+        try {
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance(sampleText);
+          utterance.voice = matched;
+          utterance.lang = matched.lang || 'vi-VN';
+          utterance.onstart = () => {
+            if (reqId === this.currentRequestId) onStart?.();
+          };
+          utterance.onend = () => finish();
+          utterance.onerror = (e) => {
+            finish();
+            onError?.(`Lỗi phát giọng Microsoft Neural: ${e.error || 'Speech error'}`);
+          };
+          window.speechSynthesis.speak(utterance);
+        } catch (e: any) {
+          finish();
+          onError?.(`Lỗi phát giọng: ${e.message}`);
+        }
+        return;
+      }
 
-      window.speechSynthesis.speak(utterance);
-    } catch {
+      // Voice not installed in OS
       finish();
+      onError?.(`Giọng Microsoft Neural (${voiceId}) chưa được cài đặt trên thiết bị này. Vui lòng cài đặt gói giọng tiếng Việt trong Windows Settings > Time & Language > Speech, hoặc sử dụng Google Tiếng Việt.`);
+      return;
     }
+
+    // --- Provider Branch 3: TikTok Trending ---
+    if (provider === 'tiktok') {
+      finish();
+      onError?.('Dịch vụ giọng đọc TikTok hiện chưa khả dụng (cần kết nối phiên TikTok API). Vui lòng chọn Google Tiếng Việt hoặc Windows SAPI.');
+      return;
+    }
+
+    // --- Provider Branch 4: Windows SAPI / Browser TTS ---
+    if (provider === 'browser') {
+      if (typeof window === 'undefined' || !window.speechSynthesis) {
+        finish();
+        onError?.('Hệ thống không hỗ trợ Windows SAPI / SpeechSynthesis.');
+        return;
+      }
+
+      const voices = window.speechSynthesis.getVoices();
+      const matched = voices.find((v) => v.voiceURI === voiceId || v.name === voiceId);
+
+      if (matched) {
+        try {
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance(sampleText);
+          utterance.voice = matched;
+          utterance.lang = matched.lang;
+          utterance.onstart = () => {
+            if (reqId === this.currentRequestId) onStart?.();
+          };
+          utterance.onend = () => finish();
+          utterance.onerror = () => finish();
+          window.speechSynthesis.speak(utterance);
+        } catch {
+          finish();
+        }
+        return;
+      }
+
+      finish();
+      onError?.(`Không tìm thấy giọng đọc Windows offline (${voiceId}) trên máy tính.`);
+      return;
+    }
+
+    // --- Provider Branch 5: Offline AI (VinaTTS / Piper) ---
+    if (provider === 'offline-ai') {
+      finish();
+      onError?.('Mô hình VinaTTS ONNX đang chuẩn bị tệp trọng số nén cho thiết bị. Đề xuất sử dụng Google Tiếng Việt.');
+      return;
+    }
+
+    finish();
+    onError?.(`Không nhận diện được engine giọng đọc: ${provider}`);
   }
 }

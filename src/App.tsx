@@ -184,9 +184,12 @@ function MainApp() {
     const found = VIETNAMESE_VOICE_CATALOG.find((v) => v.id === settings.defaultVoice);
     if (found) return `${found.providerName} • ${found.name}`;
     const sys = systemVoices.find((v) => v.id === settings.defaultVoice);
-    if (sys) return sys.name;
-    return 'Google • vi-VN (Mặc định)';
-  }, [settings.defaultVoice, systemVoices]);
+    if (sys) return `Offline SAPI • ${sys.name}`;
+    if (settings.defaultVoice === 'vinatts-medium-vi' || settings.defaultProviderId === 'offline-ai') {
+      return 'VinaTTS • AI Mô hình nén';
+    }
+    return 'Google • Tiếng Việt (Nữ Chuẩn)';
+  }, [settings.defaultVoice, settings.defaultProviderId, systemVoices]);
 
   // Build TTS Queue whenever current chapter, dictionaries, or voice changes
   const lastLoadedChapterIdRef = useRef<string>('');
@@ -626,6 +629,16 @@ function MainApp() {
     };
     setSettings(updated);
     StorageService.saveSettings(updated);
+
+    if (pipelineRef.current) {
+      pipelineRef.current.updateSettings(updated);
+      if (isPlaying) {
+        pipelineRef.current.stop();
+        setTimeout(() => {
+          pipelineRef.current?.play();
+        }, 150);
+      }
+    }
   };
 
   const handleToggleAutoNext = () => {
@@ -806,13 +819,22 @@ function MainApp() {
             {currentView === 'settings' && (
               <SettingsView
                 settings={settings}
-                voices={VIETNAMESE_VOICE_CATALOG.map((v) => ({
-                  id: v.id,
-                  name: `${v.providerName}: ${v.name}`,
-                  lang: v.lang,
-                  provider: v.provider,
-                  gender: v.gender,
-                }))}
+                voices={[
+                  ...VIETNAMESE_VOICE_CATALOG.map((v) => ({
+                    id: v.id,
+                    name: `${v.providerName}: ${v.name}`,
+                    lang: v.lang,
+                    provider: v.provider,
+                    gender: v.gender,
+                  })),
+                  ...systemVoices.map((v) => ({
+                    id: v.id,
+                    name: `Windows SAPI: ${v.name}`,
+                    lang: v.lang,
+                    provider: 'browser',
+                    gender: v.gender,
+                  })),
+                ]}
                 cacheStats={cacheStats}
                 booksCount={books.length}
                 onUpdateSettings={handleUpdateSettings}
@@ -836,13 +858,22 @@ function MainApp() {
             chapterTitle={activeChapter?.title}
             speechRate={settings.speechRate}
             autoNextChapter={settings.autoNextChapter}
-            voices={VIETNAMESE_VOICE_CATALOG.map((v) => ({
-              id: v.id,
-              name: `${v.providerName}: ${v.name}`,
-              lang: v.lang,
-              provider: v.provider,
-              gender: v.gender,
-            }))}
+            voices={[
+              ...VIETNAMESE_VOICE_CATALOG.map((v) => ({
+                id: v.id,
+                name: `${v.providerName}: ${v.name}`,
+                lang: v.lang,
+                provider: v.provider,
+                gender: v.gender,
+              })),
+              ...systemVoices.map((v) => ({
+                id: v.id,
+                name: `Windows SAPI: ${v.name}`,
+                lang: v.lang,
+                provider: 'browser',
+                gender: v.gender,
+              })),
+            ]}
             activeVoice={settings.defaultVoice}
             cacheHitStats={cacheStats}
             onPlay={handlePlay}
@@ -852,11 +883,15 @@ function MainApp() {
             onPreviousSentence={handlePreviousSentence}
             onRateChange={handleRateChange}
             onVoiceChange={(voiceId) => {
-              const matched = VIETNAMESE_VOICE_CATALOG.find((v) => v.id === voiceId);
-              handleVoiceChange(
-                matched?.provider === 'microsoft' ? 'edge-online' : 'google',
-                voiceId
-              );
+              const matchedCatalog = VIETNAMESE_VOICE_CATALOG.find((v) => v.id === voiceId);
+              const matchedSystem = systemVoices.find((v) => v.id === voiceId);
+              let providerId = 'google';
+              if (matchedCatalog) {
+                providerId = matchedCatalog.provider === 'microsoft' ? 'edge-online' : (matchedCatalog.provider === 'tiktok' ? 'tiktok' : 'google');
+              } else if (matchedSystem) {
+                providerId = 'browser';
+              }
+              handleVoiceChange(providerId, voiceId);
             }}
             onToggleAutoNext={handleToggleAutoNext}
             onSeekChunk={handleSeekChunk}

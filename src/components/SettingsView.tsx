@@ -519,7 +519,22 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 </label>
                 <select
                   value={settings.defaultProviderId}
-                  onChange={(e) => handleSave({ defaultProviderId: e.target.value })}
+                  onChange={(e) => {
+                    const newProvider = e.target.value;
+                    let compatibleVoice = 'vi-VN-default';
+                    if (newProvider === 'edge-online') {
+                      compatibleVoice = 'vi-VN-NamMinhNeural';
+                    } else if (newProvider === 'browser') {
+                      const firstBrowser = voices.find((v) => v.provider === 'browser');
+                      compatibleVoice = firstBrowser ? firstBrowser.id : 'default';
+                    } else if (newProvider === 'offline-ai') {
+                      compatibleVoice = 'vinatts-medium-vi';
+                    }
+                    handleSave({
+                      defaultProviderId: newProvider,
+                      defaultVoice: compatibleVoice,
+                    });
+                  }}
                   className="w-full h-10 px-3 bg-[var(--bg-input)] border border-[var(--border)] rounded-xl text-xs font-medium text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)]"
                 >
                   <option value="google">Google Tiếng Việt (Native Cloud, HQ)</option>
@@ -538,12 +553,18 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   onChange={(e) => handleSave({ defaultVoice: e.target.value })}
                   className="w-full h-10 px-3 bg-[var(--bg-input)] border border-[var(--border)] rounded-xl text-xs font-medium text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)]"
                 >
-                  <option value="vi-VN-default">Google Tiếng Việt (Default)</option>
-                  {voices.map((v) => (
-                    <option key={v.id} value={v.id}>
-                      {v.name} ({v.lang})
-                    </option>
-                  ))}
+                  {voices
+                    .filter((v) => {
+                      if (settings.defaultProviderId === 'google') return v.provider === 'google';
+                      if (settings.defaultProviderId === 'edge-online') return v.provider === 'microsoft' || v.provider === 'edge-online';
+                      if (settings.defaultProviderId === 'browser') return v.provider === 'browser';
+                      return true;
+                    })
+                    .map((v) => (
+                      <option key={v.id} value={v.id}>
+                        {v.name} ({v.lang})
+                      </option>
+                    ))}
                 </select>
               </div>
 
