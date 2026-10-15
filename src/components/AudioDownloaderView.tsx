@@ -973,7 +973,7 @@ export const AudioDownloaderView: React.FC<AudioDownloaderViewProps> = ({
                   className="w-full px-2.5 py-1.5 text-xs rounded-xl bg-[var(--bg-input)] border border-[var(--glass-border)] text-[var(--text-primary)] font-medium focus:outline-none focus:border-[var(--accent)] cursor-pointer disabled:opacity-50 shadow-xs"
                 >
                   {VIETNAMESE_VOICE_CATALOG.map((v) => (
-                    <option key={v.id} value={v.id} className="bg-[var(--bg-surface)] text-[var(--text-primary)] py-1.5 font-sans">
+                    <option key={v.id} value={v.id} className="bg-[var(--bg-surface)] text-[var(--text-primary)] dark:bg-slate-900 dark:text-slate-100 py-1.5 font-sans">
                       {v.providerName}: {v.name}
                     </option>
                   ))}
@@ -1009,7 +1009,7 @@ export const AudioDownloaderView: React.FC<AudioDownloaderViewProps> = ({
                   className="w-full px-2.5 py-1.5 text-xs rounded-xl bg-[var(--bg-input)] border border-[var(--glass-border)] text-[var(--text-primary)] font-medium focus:outline-none focus:border-[var(--accent)] cursor-pointer disabled:opacity-50 shadow-xs"
                 >
                   {[0.5, 0.75, 0.9, 1.0, 1.1, 1.25, 1.35, 1.5, 1.75, 2.0].map((rate) => (
-                    <option key={rate} value={rate} className="bg-[var(--bg-surface)] text-[var(--text-primary)] py-1.5 font-sans">
+                    <option key={rate} value={rate} className="bg-[var(--bg-surface)] text-[var(--text-primary)] dark:bg-slate-900 dark:text-slate-100 py-1.5 font-sans">
                       {rate.toFixed(2)}x {rate === 1.0 ? `(${t('player.standardSpeed')})` : ''}
                     </option>
                   ))}

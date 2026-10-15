@@ -1,11 +1,5 @@
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
-
-const getDirname = () => {
-  if (typeof __dirname !== 'undefined') return __dirname;
-  return path.dirname(fileURLToPath(import.meta.url));
-};
 
 /**
  * Resolves the path to the ffmpeg executable.
@@ -43,7 +37,7 @@ export function getFfmpegPath(): string {
   }
 
   // 3. Fallback dirname relative bin
-  const relativeBin = path.resolve(getDirname(), '..', 'bin', binaryName);
+  const relativeBin = path.resolve(__dirname, '..', 'bin', binaryName);
   if (fs.existsSync(relativeBin)) {
     return relativeBin;
   }

@@ -210,25 +210,23 @@ export class StorageService {
     const books = this.getBooks();
     memoryCache.books = [...books];
 
-    // Asynchronously sync from IndexedDB if any extra books exist (only if not freshly cleaned)
-    if (isCleaned) {
-      IndexedDbHelper.getAllBooks().then((idbBooks) => {
-        if (idbBooks && idbBooks.length > 0) {
-          const merged = [...memoryCache.books];
-          let hasNew = false;
-          for (const ib of idbBooks) {
-            if (!merged.some(b => b.id === ib.id)) {
-              merged.push(ib);
-              hasNew = true;
-            }
-          }
-          if (hasNew) {
-            memoryCache.books = merged;
-            this.notifyBooksChange(merged);
+    // Asynchronously sync from IndexedDB if any extra books exist
+    IndexedDbHelper.getAllBooks().then((idbBooks) => {
+      if (idbBooks && idbBooks.length > 0) {
+        const merged = [...memoryCache.books];
+        let hasNew = false;
+        for (const ib of idbBooks) {
+          if (!merged.some(b => b.id === ib.id)) {
+            merged.push(ib);
+            hasNew = true;
           }
         }
-      });
-    }
+        if (hasNew) {
+          memoryCache.books = merged;
+          this.notifyBooksChange(merged);
+        }
+      }
+    });
 
     return { books: [...books], activeBookId: books[0]?.id || '' };
   }
