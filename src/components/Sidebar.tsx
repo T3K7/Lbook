@@ -180,7 +180,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
         <div className="flex items-center justify-between text-[10px] text-[var(--text-muted)] font-medium pt-1 border-t border-[var(--glass-border)]">
           <span>{t('common.appTitle')}</span>
-          <span className="font-mono font-semibold">v0.1.1</span>
+          <span className="font-mono font-semibold">v0.01</span>
         </div>
       </div>
     </aside>
