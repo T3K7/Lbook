@@ -662,24 +662,30 @@ export const AudioDownloaderView: React.FC<AudioDownloaderViewProps> = ({
   const isBusy = isGenerating || !!singleDownloadingId;
 
   return (
-    <div className="flex-1 min-h-0 flex flex-col h-full overflow-hidden bg-transparent">
+    <div className="flex-1 min-h-0 flex flex-col h-full overflow-hidden bg-transparent text-[var(--text-primary)] select-none">
       {/* 1. THANH TIÊU ĐỀ GỌN GÀNG & CHỌN TRUYỆN (Compact Header + Story Selector) */}
-      <header className="px-4 py-2.5 sm:px-6 sm:py-3 border-b border-white/10 flex items-center justify-between gap-3 shrink-0 bg-slate-900/80 backdrop-blur-md z-30">
+      <header
+        className="px-4 py-2.5 sm:px-6 sm:py-3 border-b border-[var(--glass-border)] flex items-center justify-between gap-3 shrink-0 bg-[var(--glass-bg-header)] backdrop-blur-md z-30 transition-colors"
+        style={{
+          backdropFilter: 'blur(var(--glass-blur-header)) saturate(var(--glass-saturate))',
+          WebkitBackdropFilter: 'blur(var(--glass-blur-header)) saturate(var(--glass-saturate))',
+        }}
+      >
         {/* Tiêu đề ngắn gọn: 🎵 Tải âm thanh */}
         <div className="flex items-center gap-2.5 min-w-0 shrink-0">
-          <div className="w-8 h-8 rounded-xl bg-emerald-500 flex items-center justify-center text-slate-950 shadow-xs shrink-0">
+          <div className="w-8 h-8 rounded-xl bg-[var(--accent)] flex items-center justify-center text-white shadow-xs shrink-0">
             <Music className="w-4 h-4 stroke-[2.5]" />
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h1 className="text-sm sm:text-base font-extrabold text-white tracking-tight whitespace-nowrap">
+              <h1 className="text-sm sm:text-base font-extrabold text-[var(--text-primary)] tracking-tight whitespace-nowrap">
                 {t('downloader.title')}
               </h1>
-              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/40 hidden xs:inline-block">
+              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-md bg-[var(--accent-soft)] text-[var(--accent)] font-bold border border-[var(--accent-border)] hidden xs:inline-block">
                 MP3 HQ
               </span>
             </div>
-            <p className="text-[11px] text-slate-300 font-medium truncate hidden sm:block">
+            <p className="text-[11px] text-[var(--text-secondary)] font-medium truncate hidden sm:block">
               {t('downloader.subtitle')}
             </p>
           </div>
@@ -692,69 +698,69 @@ export const AudioDownloaderView: React.FC<AudioDownloaderViewProps> = ({
               type="button"
               disabled={isBusy}
               onClick={() => setIsBookDropdownOpen((prev) => !prev)}
-              className="flex items-center gap-2 bg-slate-900/90 hover:bg-slate-800/90 border border-white/20 hover:border-emerald-500/50 rounded-xl px-3 h-9 sm:h-10 w-48 xs:w-56 sm:w-64 md:w-72 backdrop-blur-md transition-all cursor-pointer shadow-xs text-left group shrink-0"
+              className="flex items-center gap-2 bg-[var(--glass-bg)] hover:bg-[var(--glass-bg-strong)] border border-[var(--glass-border)] hover:border-[var(--accent-border)] rounded-xl px-3 h-9 sm:h-10 w-48 xs:w-56 sm:w-64 md:w-72 backdrop-blur-md transition-all cursor-pointer shadow-xs text-left group shrink-0"
               title={selectedBook ? `${selectedBook.title} (${selectedBook.totalChapters} ${t('common.chapter')})` : t('downloader.selectStory')}
             >
               {/* Icon bên trái: luôn giữ nguyên, không bị đẩy hay ẩn */}
-              <div className="w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/30 group-hover:scale-105 transition-transform">
+              <div className="w-6 h-6 rounded-lg bg-[var(--accent-soft)] text-[var(--accent)] flex items-center justify-center shrink-0 border border-[var(--accent-border)] group-hover:scale-105 transition-transform">
                 <BookOpen className="w-3.5 h-3.5 stroke-[2.2]" />
               </div>
 
               {/* Title Container: min-w-0 flex-1 để CSS ellipsis hoạt động chuẩn xác 1 dòng */}
               <div className="min-w-0 flex-1 overflow-hidden">
-                <span className="block text-xs sm:text-sm font-semibold text-white truncate whitespace-nowrap">
+                <span className="block text-xs sm:text-sm font-semibold text-[var(--text-primary)] truncate whitespace-nowrap">
                   {selectedBook ? selectedBook.title : t('downloader.notSelectedStory')}
                 </span>
               </div>
 
               {/* Chevron bên phải: luôn giữ nguyên ở mép phải */}
               <ChevronDown
-                className={`w-4 h-4 text-slate-300 group-hover:text-white shrink-0 transition-transform duration-200 ${
-                  isBookDropdownOpen ? 'rotate-180 text-emerald-400' : ''
+                className={`w-4 h-4 text-[var(--text-muted)] group-hover:text-[var(--text-primary)] shrink-0 transition-transform duration-200 ${
+                  isBookDropdownOpen ? 'rotate-180 text-[var(--accent)]' : ''
                 }`}
               />
             </button>
 
-            {/* Menu Dropdown danh sách truyện: Kính mờ cao cấp, sáng rõ mọi tên truyện */}
+            {/* Menu Dropdown danh sách truyện: Kính mờ theo theme */}
             {isBookDropdownOpen && (
               <div
-                className="absolute right-0 top-full mt-2 w-80 sm:w-96 max-w-[92vw] bg-slate-900/95 backdrop-blur-2xl border border-white/20 rounded-2xl shadow-2xl z-50 overflow-hidden animate-fadeIn"
+                className="absolute right-0 top-full mt-2 w-80 sm:w-96 max-w-[92vw] bg-[var(--glass-bg-dropdown)] backdrop-blur-2xl border border-[var(--glass-border-strong)] rounded-2xl shadow-2xl z-50 overflow-hidden animate-fadeIn"
                 style={{
                   backdropFilter: 'blur(28px) saturate(var(--glass-saturate))',
                   WebkitBackdropFilter: 'blur(28px) saturate(var(--glass-saturate))',
-                  boxShadow: 'var(--shadow-md), 0 20px 40px -10px rgba(0,0,0,0.6)',
+                  boxShadow: 'var(--shadow-md), 0 20px 40px -10px rgba(0,0,0,0.15)',
                 }}
               >
                 {/* Header dropdown */}
-                <div className="px-3.5 py-2.5 bg-slate-800/60 border-b border-white/10 flex items-center justify-between gap-2">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-100 flex items-center gap-1.5">
-                    <BookOpen className="w-3.5 h-3.5 text-emerald-400" />
+                <div className="px-3.5 py-2.5 bg-[var(--glass-bg-soft)] border-b border-[var(--glass-border)] flex items-center justify-between gap-2">
+                  <span className="text-xs font-bold uppercase tracking-wider text-[var(--text-primary)] flex items-center gap-1.5">
+                    <BookOpen className="w-3.5 h-3.5 text-[var(--accent)]" />
                     {t('downloader.storiesList', { count: books.length })}
                   </span>
-                  <span className="text-[11px] text-slate-300 font-medium">{t('downloader.selectToLoadChapters')}</span>
+                  <span className="text-[11px] text-[var(--text-muted)] font-medium">{t('downloader.selectToLoadChapters')}</span>
                 </div>
 
                 {/* Tìm kiếm nhanh nếu có trên 3 truyện */}
                 {books.length > 3 && (
-                  <div className="p-2 border-b border-white/10 bg-slate-900/50">
+                  <div className="p-2 border-b border-[var(--glass-border)] bg-[var(--glass-bg-soft)]/50">
                     <div className="relative">
-                      <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
                       <input
                         type="text"
                         placeholder={t('downloader.searchStoryPlaceholder')}
                         value={bookSearchQuery}
                         onChange={(e) => setBookSearchQuery(e.target.value)}
-                        className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl bg-slate-800/50 border border-white/10 text-slate-100 placeholder-slate-400 focus:outline-none focus:border-emerald-500"
+                        className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl bg-[var(--bg-input)] border border-[var(--glass-border)] text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)]"
                         autoFocus
                       />
                     </div>
                   </div>
                 )}
 
-                {/* Danh sách các tác phẩm: 100% chữ sáng rõ, nền tối kính mờ sang trọng */}
-                <div className="max-h-72 overflow-y-auto divide-y divide-white/5 py-1">
+                {/* Danh sách các tác phẩm */}
+                <div className="max-h-72 overflow-y-auto divide-y divide-[var(--glass-border-subtle)] py-1">
                   {filteredBooks.length === 0 ? (
-                    <div className="py-6 text-center text-xs text-slate-400">
+                    <div className="py-6 text-center text-xs text-[var(--text-muted)]">
                       {t('downloader.noMatchingStory')}
                     </div>
                   ) : (
@@ -774,33 +780,33 @@ export const AudioDownloaderView: React.FC<AudioDownloaderViewProps> = ({
                           }}
                           className={`w-full text-left px-3.5 py-2.5 transition-colors cursor-pointer flex items-center justify-between gap-3 ${
                             isSelected
-                              ? 'bg-emerald-500/20 text-emerald-300 font-semibold border-l-4 border-emerald-400'
-                              : 'hover:bg-white/10 text-slate-100'
+                              ? 'bg-[var(--accent-soft)] text-[var(--accent)] font-semibold border-l-4 border-[var(--accent)]'
+                              : 'hover:bg-[var(--accent-soft)]/50 text-[var(--text-primary)]'
                           }`}
                         >
                           <div className="min-w-0 flex-1">
                             <div
                               className={`text-xs sm:text-sm font-semibold truncate ${
-                                isSelected ? 'text-emerald-300' : 'text-slate-100'
+                                isSelected ? 'text-[var(--accent)]' : 'text-[var(--text-primary)]'
                               }`}
                               title={b.title}
                             >
                               {b.title}
                             </div>
-                            <div className="text-[11px] text-slate-300 font-medium mt-0.5 flex items-center gap-2">
-                              <span className="font-mono text-emerald-400 font-semibold">
+                            <div className="text-[11px] text-[var(--text-secondary)] font-medium mt-0.5 flex items-center gap-2">
+                              <span className="font-mono text-[var(--accent)] font-semibold">
                                 {t('common.chaptersCount', { count: b.totalChapters })}
                               </span>
                               {b.author && (
                                 <>
-                                  <span>•</span>
-                                  <span className="truncate max-w-[160px]">{t('common.author')}: {b.author}</span>
+                                  <span className="text-[var(--text-muted)]">•</span>
+                                  <span className="truncate max-w-[160px] text-[var(--text-muted)]">{t('common.author')}: {b.author}</span>
                                 </>
                               )}
                             </div>
                           </div>
                           {isSelected && (
-                            <div className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+                            <div className="w-5 h-5 rounded-full bg-[var(--accent-soft)] text-[var(--accent)] flex items-center justify-center shrink-0">
                               <CheckCircle2 className="w-3.5 h-3.5 stroke-[2.5]" />
                             </div>
                           )}
@@ -819,8 +825,8 @@ export const AudioDownloaderView: React.FC<AudioDownloaderViewProps> = ({
               variant="secondary"
               size="sm"
               onClick={handleCancelExport}
-              leftIcon={<XCircle className="w-3.5 h-3.5 text-red-500" />}
-              className="text-red-500 border-red-500/30 hover:bg-red-500/10 text-xs px-2.5 py-1.5"
+              leftIcon={<XCircle className="w-3.5 h-3.5 text-[var(--danger)]" />}
+              className="text-[var(--danger)] border-[var(--danger)]/30 hover:bg-[var(--danger-soft)] text-xs px-2.5 py-1.5"
             >
               {t('common.cancel')}
             </Button>
@@ -828,14 +834,20 @@ export const AudioDownloaderView: React.FC<AudioDownloaderViewProps> = ({
         </div>
       </header>
           {/* Audio Config & Filter Toolbar: shrink-0 */}
-          <div className="p-3 sm:p-4 border-b border-white/10 bg-slate-900/60 backdrop-blur-md space-y-3 shrink-0">
+          <div
+            className="p-3 sm:p-4 border-b border-[var(--glass-border)] bg-[var(--glass-bg)] backdrop-blur-md space-y-3 shrink-0 transition-colors"
+            style={{
+              backdropFilter: 'blur(var(--glass-blur)) saturate(var(--glass-saturate))',
+              WebkitBackdropFilter: 'blur(var(--glass-blur)) saturate(var(--glass-saturate))',
+            }}
+          >
             {/* Top row: Chapter selection status & quick selection buttons */}
             <div className="flex flex-wrap items-center justify-between gap-2.5">
               <div className="flex items-center gap-2.5">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-200">
+                <span className="text-xs font-bold uppercase tracking-wider text-[var(--text-primary)]">
                   {t('common.chapter')}:
                 </span>
-                <span className="text-xs font-bold px-2.5 py-0.5 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-mono">
+                <span className="text-xs font-bold px-2.5 py-0.5 rounded-lg bg-[var(--accent-soft)] text-[var(--accent)] border border-[var(--accent-border)] font-mono">
                   {t('downloader.chaptersSelectedCount', { selected: selectedChapterIds.size, total: chapters.length })}
                 </span>
               </div>
@@ -846,7 +858,7 @@ export const AudioDownloaderView: React.FC<AudioDownloaderViewProps> = ({
                   type="button"
                   onClick={handleSelectAllFiltered}
                   disabled={isBusy}
-                  className="px-2.5 py-1 rounded-lg bg-slate-800/90 hover:bg-slate-700/90 border border-white/20 hover:border-emerald-500/50 text-white transition-colors cursor-pointer disabled:opacity-50 font-semibold shadow-xs"
+                  className="px-2.5 py-1 rounded-lg bg-[var(--accent-soft)] hover:bg-[var(--accent-soft)]/80 border border-[var(--accent-border)] text-[var(--accent)] transition-colors cursor-pointer disabled:opacity-50 font-semibold shadow-xs"
                 >
                   {t('common.selectAll')} ({filteredChapters.length})
                 </button>
@@ -854,7 +866,7 @@ export const AudioDownloaderView: React.FC<AudioDownloaderViewProps> = ({
                   type="button"
                   onClick={handleDeselectAll}
                   disabled={isBusy}
-                  className="px-2.5 py-1 rounded-lg bg-slate-800/90 hover:bg-slate-700/90 border border-white/20 hover:border-white/40 text-slate-200 hover:text-white transition-colors cursor-pointer disabled:opacity-50 font-semibold shadow-xs"
+                  className="px-2.5 py-1 rounded-lg bg-[var(--glass-bg-soft)] hover:bg-[var(--glass-bg-strong)] border border-[var(--glass-border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors cursor-pointer disabled:opacity-50 font-semibold shadow-xs"
                 >
                   {t('common.deselectAll')}
                 </button>
@@ -863,7 +875,7 @@ export const AudioDownloaderView: React.FC<AudioDownloaderViewProps> = ({
                     type="button"
                     onClick={() => handleSelectRange(10)}
                     disabled={isBusy}
-                    className="px-2 py-1 rounded-lg bg-slate-800/90 hover:bg-slate-700/90 border border-white/20 hover:border-white/40 text-slate-200 hover:text-white transition-colors cursor-pointer disabled:opacity-50 font-semibold hidden sm:inline-block shadow-xs"
+                    className="px-2 py-1 rounded-lg bg-[var(--glass-bg-soft)] hover:bg-[var(--glass-bg-strong)] border border-[var(--glass-border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors cursor-pointer disabled:opacity-50 font-semibold hidden sm:inline-block shadow-xs"
                   >
                     {t('downloader.first10Chapters')}
                   </button>
@@ -873,7 +885,7 @@ export const AudioDownloaderView: React.FC<AudioDownloaderViewProps> = ({
                     type="button"
                     onClick={() => handleSelectRange(50)}
                     disabled={isBusy}
-                    className="px-2 py-1 rounded-lg bg-slate-800/90 hover:bg-slate-700/90 border border-white/20 hover:border-white/40 text-slate-200 hover:text-white transition-colors cursor-pointer disabled:opacity-50 font-semibold hidden lg:inline-block shadow-xs"
+                    className="px-2 py-1 rounded-lg bg-[var(--glass-bg-soft)] hover:bg-[var(--glass-bg-strong)] border border-[var(--glass-border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors cursor-pointer disabled:opacity-50 font-semibold hidden lg:inline-block shadow-xs"
                   >
                     {t('downloader.first50Chapters')}
                   </button>
@@ -883,7 +895,7 @@ export const AudioDownloaderView: React.FC<AudioDownloaderViewProps> = ({
                     type="button"
                     onClick={() => handleSelectNextBatch(10)}
                     disabled={isBusy}
-                    className="px-2 py-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-emerald-300 hover:text-emerald-200 transition-colors cursor-pointer disabled:opacity-50 font-semibold hidden md:inline-block shadow-xs"
+                    className="px-2 py-1 rounded-lg bg-[var(--accent-soft)] hover:bg-[var(--accent-soft)]/80 border border-[var(--accent-border)] text-[var(--accent)] transition-colors cursor-pointer disabled:opacity-50 font-semibold hidden md:inline-block shadow-xs"
                     title={t('downloader.next10Chapters') || '+10 chương kế tiếp'}
                   >
                     {t('downloader.next10Chapters') || '+10 chương kế'}
@@ -892,8 +904,8 @@ export const AudioDownloaderView: React.FC<AudioDownloaderViewProps> = ({
 
                 {/* Range Selector Bar */}
                 {chapters.length > 1 && (
-                  <div className="flex items-center gap-1.5 bg-slate-900/90 px-2 py-1 rounded-xl border border-white/20 shadow-xs">
-                    <span className="text-slate-300 font-medium text-[11px]">{t('downloader.fromChapter') || 'Từ:'}</span>
+                  <div className="flex items-center gap-1.5 bg-[var(--glass-bg-soft)] px-2 py-1 rounded-xl border border-[var(--glass-border)] shadow-xs">
+                    <span className="text-[var(--text-secondary)] font-medium text-[11px]">{t('downloader.fromChapter') || 'Từ:'}</span>
                     <input
                       type="number"
                       min={1}
@@ -903,9 +915,9 @@ export const AudioDownloaderView: React.FC<AudioDownloaderViewProps> = ({
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') handleApplyRange(rangeFrom, rangeTo);
                       }}
-                      className="w-12 px-1 py-0.5 rounded-md bg-slate-800 border border-white/20 text-white text-center font-mono font-bold text-xs focus:outline-none focus:border-emerald-500"
+                      className="w-12 px-1 py-0.5 rounded-md bg-[var(--bg-input)] border border-[var(--glass-border)] text-[var(--text-primary)] text-center font-mono font-bold text-xs focus:outline-none focus:border-[var(--accent)]"
                     />
-                    <span className="text-slate-300 font-medium text-[11px]">{t('downloader.toChapter') || 'Đến:'}</span>
+                    <span className="text-[var(--text-secondary)] font-medium text-[11px]">{t('downloader.toChapter') || 'Đến:'}</span>
                     <input
                       type="number"
                       min={1}
@@ -915,13 +927,13 @@ export const AudioDownloaderView: React.FC<AudioDownloaderViewProps> = ({
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') handleApplyRange(rangeFrom, rangeTo);
                       }}
-                      className="w-12 px-1 py-0.5 rounded-md bg-slate-800 border border-white/20 text-white text-center font-mono font-bold text-xs focus:outline-none focus:border-emerald-500"
+                      className="w-12 px-1 py-0.5 rounded-md bg-[var(--bg-input)] border border-[var(--glass-border)] text-[var(--text-primary)] text-center font-mono font-bold text-xs focus:outline-none focus:border-[var(--accent)]"
                     />
                     <button
                       type="button"
                       onClick={() => handleApplyRange(rangeFrom, rangeTo)}
                       disabled={isBusy || chapters.length === 0}
-                      className="px-2 py-0.5 rounded-md bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold transition-all cursor-pointer disabled:opacity-50 text-xs shadow-xs"
+                      className="px-2 py-0.5 rounded-md bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white font-bold transition-all cursor-pointer disabled:opacity-50 text-xs shadow-xs"
                     >
                       {t('downloader.applyRange') || 'Chọn'}
                     </button>
@@ -931,10 +943,10 @@ export const AudioDownloaderView: React.FC<AudioDownloaderViewProps> = ({
             </div>
 
             {/* Bottom row: Voice selector, speed, format, search chapter */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-2.5 border-t border-white/10">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-2.5 border-t border-[var(--glass-border)]">
               {/* Voice select */}
               <div>
-                <label className="block text-xs font-semibold text-slate-200 mb-1">
+                <label className="block text-xs font-semibold text-[var(--text-primary)] mb-1">
                   {t('downloader.voiceLabel')}
                 </label>
                 <select
@@ -958,10 +970,10 @@ export const AudioDownloaderView: React.FC<AudioDownloaderViewProps> = ({
                       return next;
                     });
                   }}
-                  className="w-full px-2.5 py-1.5 text-xs rounded-xl bg-slate-900/90 border border-white/20 text-white font-medium focus:outline-none focus:border-emerald-500 cursor-pointer disabled:opacity-50 shadow-xs"
+                  className="w-full px-2.5 py-1.5 text-xs rounded-xl bg-[var(--bg-input)] border border-[var(--glass-border)] text-[var(--text-primary)] font-medium focus:outline-none focus:border-[var(--accent)] cursor-pointer disabled:opacity-50 shadow-xs"
                 >
                   {VIETNAMESE_VOICE_CATALOG.map((v) => (
-                    <option key={v.id} value={v.id} className="bg-slate-900 text-slate-100 py-1.5 font-sans">
+                    <option key={v.id} value={v.id} className="bg-[var(--bg-surface)] text-[var(--text-primary)] py-1.5 font-sans">
                       {v.providerName}: {v.name}
                     </option>
                   ))}
@@ -970,8 +982,8 @@ export const AudioDownloaderView: React.FC<AudioDownloaderViewProps> = ({
 
               {/* Speed rate */}
               <div>
-                <label className="block text-xs font-semibold text-slate-200 mb-1">
-                  {t('downloader.speedLabel')} <span className="font-mono text-emerald-400 font-bold">{selectedRate.toFixed(2)}x</span>
+                <label className="block text-xs font-semibold text-[var(--text-primary)] mb-1">
+                  {t('downloader.speedLabel')} <span className="font-mono text-[var(--accent)] font-bold">{selectedRate.toFixed(2)}x</span>
                 </label>
                 <select
                   value={selectedRate}
@@ -994,10 +1006,10 @@ export const AudioDownloaderView: React.FC<AudioDownloaderViewProps> = ({
                       return next;
                     });
                   }}
-                  className="w-full px-2.5 py-1.5 text-xs rounded-xl bg-slate-900/90 border border-white/20 text-white font-medium focus:outline-none focus:border-emerald-500 cursor-pointer disabled:opacity-50 shadow-xs"
+                  className="w-full px-2.5 py-1.5 text-xs rounded-xl bg-[var(--bg-input)] border border-[var(--glass-border)] text-[var(--text-primary)] font-medium focus:outline-none focus:border-[var(--accent)] cursor-pointer disabled:opacity-50 shadow-xs"
                 >
                   {[0.5, 0.75, 0.9, 1.0, 1.1, 1.25, 1.35, 1.5, 1.75, 2.0].map((rate) => (
-                    <option key={rate} value={rate} className="bg-slate-900 text-slate-100 py-1.5 font-sans">
+                    <option key={rate} value={rate} className="bg-[var(--bg-surface)] text-[var(--text-primary)] py-1.5 font-sans">
                       {rate.toFixed(2)}x {rate === 1.0 ? `(${t('player.standardSpeed')})` : ''}
                     </option>
                   ))}
@@ -1006,18 +1018,18 @@ export const AudioDownloaderView: React.FC<AudioDownloaderViewProps> = ({
 
               {/* Format */}
               <div>
-                <label className="block text-xs font-semibold text-slate-200 mb-1">
+                <label className="block text-xs font-semibold text-[var(--text-primary)] mb-1">
                   {t('downloader.formatLabel')}
                 </label>
-                <div className="flex items-center gap-1 bg-slate-900/90 p-0.5 rounded-xl border border-white/20 shadow-xs">
+                <div className="flex items-center gap-1 bg-[var(--glass-bg-soft)] p-0.5 rounded-xl border border-[var(--glass-border)] shadow-xs">
                   <button
                     type="button"
                     disabled={isBusy}
                     onClick={() => setExportFormat('zip')}
                     className={`flex-1 py-1 text-xs rounded-lg font-semibold transition-all cursor-pointer ${
                       exportFormat === 'zip'
-                        ? 'bg-emerald-500 text-slate-950 shadow-xs font-bold'
-                        : 'text-slate-200 hover:text-white'
+                        ? 'bg-[var(--accent)] text-white shadow-xs font-bold'
+                        : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
                     }`}
                   >
                     {t('downloader.formatZip')}
@@ -1028,8 +1040,8 @@ export const AudioDownloaderView: React.FC<AudioDownloaderViewProps> = ({
                     onClick={() => setExportFormat('individual')}
                     className={`flex-1 py-1 text-xs rounded-lg font-semibold transition-all cursor-pointer ${
                       exportFormat === 'individual'
-                        ? 'bg-emerald-500 text-slate-950 shadow-xs font-bold'
-                        : 'text-slate-200 hover:text-white'
+                        ? 'bg-[var(--accent)] text-white shadow-xs font-bold'
+                        : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
                     }`}
                   >
                     {t('downloader.formatIndividual')}
@@ -1039,17 +1051,17 @@ export const AudioDownloaderView: React.FC<AudioDownloaderViewProps> = ({
 
               {/* Chapter filter */}
               <div>
-                <label className="block text-xs font-semibold text-slate-200 mb-1">
+                <label className="block text-xs font-semibold text-[var(--text-primary)] mb-1">
                   {t('bookDetail.searchChapters')}
                 </label>
                 <div className="relative">
-                  <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
                   <input
                     type="text"
                     placeholder={t('downloader.searchChapterPlaceholder')}
                     value={searchChapterQuery}
                     onChange={(e) => setSearchChapterQuery(e.target.value)}
-                    className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl bg-slate-900/90 border border-white/20 text-white placeholder-slate-400 placeholder:opacity-100 focus:outline-none focus:border-emerald-500 transition-colors shadow-xs"
+                    className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl bg-[var(--bg-input)] border border-[var(--glass-border)] text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)] transition-colors shadow-xs"
                   />
                 </div>
               </div>
@@ -1088,20 +1100,20 @@ export const AudioDownloaderView: React.FC<AudioDownloaderViewProps> = ({
 
           {/* Download Success & Confirmation Banner: 100% Guaranteed Windows File Delivery */}
           {lastFinishedDownload && !isGenerating && (
-            <div className="mx-3 sm:mx-5 my-2.5 p-3.5 sm:p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex flex-wrap items-center justify-between gap-3 text-emerald-400 shrink-0 shadow-sm animate-fadeIn">
+            <div className="mx-3 sm:mx-5 my-2.5 p-3.5 sm:p-4 rounded-2xl bg-[var(--accent-soft)] border border-[var(--accent-border)] flex flex-wrap items-center justify-between gap-3 text-[var(--accent)] shrink-0 shadow-sm animate-fadeIn">
               <div className="flex items-center gap-3 min-w-0">
-                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-[var(--accent)] text-white flex items-center justify-center shrink-0">
                   <CheckCircle2 className="w-5 h-5 stroke-[2.5]" />
                 </div>
                 <div className="min-w-0">
-                  <div className="text-xs font-semibold text-emerald-300">
+                  <div className="text-xs font-semibold text-[var(--accent)]">
                     {t('downloader.downloadCompletedBanner')}
                   </div>
-                  <div className="text-sm font-bold text-white truncate max-w-sm sm:max-w-xl font-mono mt-0.5">
+                  <div className="text-sm font-bold text-[var(--text-primary)] truncate max-w-sm sm:max-w-xl font-mono mt-0.5">
                     {lastFinishedDownload.filename}
                   </div>
-                  <div className="text-[11px] text-emerald-400/80 mt-0.5">
-                    {t('downloader.actualRenderSpeed')} <span className="font-bold text-emerald-300 font-mono">{lastFinishedDownload.rate.toFixed(2)}x</span>
+                  <div className="text-[11px] text-[var(--text-secondary)] mt-0.5">
+                    {t('downloader.actualRenderSpeed')} <span className="font-bold text-[var(--accent)] font-mono">{lastFinishedDownload.rate.toFixed(2)}x</span>
                     {lastFinishedDownload.sizeBytes ? ` • ${t('downloader.fileSize')} ${formatBytes(lastFinishedDownload.sizeBytes)}` : ''}
                   </div>
                 </div>
@@ -1118,7 +1130,7 @@ export const AudioDownloaderView: React.FC<AudioDownloaderViewProps> = ({
                       );
                     }
                   }}
-                  className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-md transition-all cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white font-bold text-xs flex items-center gap-1.5 shadow-md transition-all cursor-pointer"
                   title={t('downloader.saveFileTooltip')}
                 >
                   <Download className="w-4 h-4 stroke-[2.5]" />
@@ -1127,7 +1139,7 @@ export const AudioDownloaderView: React.FC<AudioDownloaderViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setLastFinishedDownload(null)}
-                  className="w-8 h-8 rounded-xl hover:bg-white/10 text-emerald-400/70 hover:text-white flex items-center justify-center transition cursor-pointer text-sm"
+                  className="w-8 h-8 rounded-xl hover:bg-[var(--accent-soft)] text-[var(--text-muted)] hover:text-[var(--text-primary)] flex items-center justify-center transition cursor-pointer text-sm"
                   title={t('downloader.closeAlert')}
                 >
                   ✕
@@ -1159,8 +1171,8 @@ export const AudioDownloaderView: React.FC<AudioDownloaderViewProps> = ({
                     }}
                     className={`p-3.5 sm:p-4 rounded-xl border transition-all flex items-center justify-between gap-3 sm:gap-4 cursor-pointer select-none ${
                       isChecked
-                        ? 'bg-emerald-500/15 border-emerald-500/60 shadow-sm'
-                        : 'bg-slate-900/60 hover:bg-slate-800/70 border-white/10 hover:border-white/25'
+                        ? 'bg-[var(--accent-soft)] border-[var(--accent-border)] shadow-xs'
+                        : 'bg-[var(--glass-bg-card)] hover:bg-[var(--glass-bg-card-hover)] border-[var(--glass-border)] hover:border-[var(--glass-border-strong)]'
                     }`}
                   >
                     {/* Left: Checkbox & Chapter Info */}
@@ -1172,28 +1184,28 @@ export const AudioDownloaderView: React.FC<AudioDownloaderViewProps> = ({
                           e.stopPropagation();
                           handleToggleChapter(chapter.id, e);
                         }}
-                        className="cursor-pointer text-emerald-400 shrink-0 disabled:opacity-50 p-1"
+                        className="cursor-pointer text-[var(--accent)] shrink-0 disabled:opacity-50 p-1"
                       >
                         {isChecked ? (
                           <CheckSquare className="w-4 h-4 stroke-[2.5]" />
                         ) : (
-                          <Square className="w-4 h-4 text-slate-400 hover:text-emerald-400 stroke-[2]" />
+                          <Square className="w-4 h-4 text-[var(--text-muted)] hover:text-[var(--accent)] stroke-[2]" />
                         )}
                       </button>
 
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-emerald-400 shrink-0 font-mono">
+                          <span className="text-xs font-bold text-[var(--accent)] shrink-0 font-mono">
                             #{chapter.chapterIndex + 1}
                           </span>
-                          <h4 className="text-xs sm:text-sm font-semibold text-white truncate">
+                          <h4 className="text-xs sm:text-sm font-semibold text-[var(--text-primary)] truncate">
                             {chapter.title}
                           </h4>
                         </div>
 
-                        <div className="flex items-center gap-2 sm:gap-3 text-xs text-slate-300 font-medium mt-1 flex-wrap">
+                        <div className="flex items-center gap-2 sm:gap-3 text-xs text-[var(--text-secondary)] font-medium mt-1 flex-wrap">
                           <span>{t('downloader.wordsCount', { count: chapter.wordCount.toLocaleString() })}</span>
-                          <span className="text-slate-400">•</span>
+                          <span className="text-[var(--text-muted)]">•</span>
                           <span>
                             {chapter.paragraphs
                               ? t('downloader.paragraphsCount', { count: chapter.paragraphs.length })
@@ -1201,8 +1213,8 @@ export const AudioDownloaderView: React.FC<AudioDownloaderViewProps> = ({
                           </span>
                           {state.sizeBytes && (
                             <>
-                              <span className="text-slate-400">•</span>
-                              <span className="text-emerald-300 font-mono font-semibold">
+                              <span className="text-[var(--text-muted)]">•</span>
+                              <span className="text-[var(--accent)] font-mono font-semibold">
                                 {formatBytes(state.sizeBytes)}
                               </span>
                             </>
@@ -1215,14 +1227,14 @@ export const AudioDownloaderView: React.FC<AudioDownloaderViewProps> = ({
                     <div className="flex items-center gap-2 shrink-0">
                       {/* Status Pill */}
                       {(state.status === 'processing' || isThisSingleDownloading) && (
-                        <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 text-xs font-mono font-bold border border-emerald-500/40">
+                        <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-[var(--accent-soft)] text-[var(--accent)] text-xs font-mono font-bold border border-[var(--accent-border)]">
                           <RefreshCw className="w-3 h-3 animate-spin" />
                           <span>{state.percent}%</span>
                         </div>
                       )}
 
                       {state.status === 'completed' && (
-                        <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 text-xs font-semibold border border-emerald-500/30">
+                        <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-[var(--accent-soft)] text-[var(--accent)] text-xs font-semibold border border-[var(--accent-border)]">
                           <CheckCircle2 className="w-3.5 h-3.5 stroke-[2.5]" />
                           <span className="hidden sm:inline">{t('downloader.ready')}</span>
                         </div>
@@ -1230,7 +1242,7 @@ export const AudioDownloaderView: React.FC<AudioDownloaderViewProps> = ({
 
                       {state.status === 'failed' && (
                         <div
-                          className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-red-500/20 text-red-300 text-xs font-semibold border border-red-500/30"
+                          className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-[var(--danger-soft)] text-[var(--danger)] text-xs font-semibold border border-[var(--danger)]/30"
                           title={state.error}
                         >
                           <AlertCircle className="w-3.5 h-3.5" />
@@ -1245,8 +1257,8 @@ export const AudioDownloaderView: React.FC<AudioDownloaderViewProps> = ({
                           onClick={() => handleTogglePreviewAudio(chapter.id)}
                           className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all cursor-pointer ${
                             isPreviewing
-                              ? 'bg-emerald-500 text-slate-950 shadow-xs'
-                              : 'bg-slate-800/90 hover:bg-slate-700 text-white border border-white/20'
+                              ? 'bg-[var(--accent)] text-white shadow-xs'
+                              : 'bg-[var(--glass-bg-soft)] hover:bg-[var(--glass-bg-strong)] text-[var(--text-primary)] border border-[var(--glass-border)]'
                           }`}
                           title={isPreviewing ? t('downloader.pausePreview') : t('downloader.previewAudio')}
                         >
@@ -1265,15 +1277,15 @@ export const AudioDownloaderView: React.FC<AudioDownloaderViewProps> = ({
                         disabled={isBusy && !isThisSingleDownloading && state.status !== 'completed'}
                         className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer disabled:opacity-50 ${
                           state.status === 'completed'
-                            ? 'bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 border border-emerald-500/40'
+                            ? 'bg-[var(--accent-soft)] text-[var(--accent)] hover:bg-[var(--accent-soft)]/80 border border-[var(--accent-border)]'
                             : isThisSingleDownloading
-                            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-                            : 'bg-slate-800/90 hover:bg-slate-700 text-slate-200 hover:text-white border border-white/20 hover:border-emerald-500/50'
+                            ? 'bg-[var(--accent-soft)] text-[var(--accent)] border border-[var(--accent-border)]'
+                            : 'bg-[var(--glass-bg-soft)] hover:bg-[var(--glass-bg-strong)] text-[var(--text-primary)] border border-[var(--glass-border)] hover:border-[var(--accent-border)]'
                         }`}
                         title={t('downloader.downloadThisChapterTooltip')}
                       >
                         {isThisSingleDownloading ? (
-                          <RefreshCw className="w-3.5 h-3.5 animate-spin text-emerald-400" />
+                          <RefreshCw className="w-3.5 h-3.5 animate-spin text-[var(--accent)]" />
                         ) : (
                           <Download className="w-3.5 h-3.5" />
                         )}
@@ -1287,18 +1299,24 @@ export const AudioDownloaderView: React.FC<AudioDownloaderViewProps> = ({
           </div>
 
           {/* 4. BOTTOM SUMMARY FOOTER: Pinned at bottom, shrink-0, backdrop-blur */}
-          <footer className="p-3 sm:p-4 border-t border-white/10 bg-slate-900/90 backdrop-blur-md flex flex-wrap items-center justify-between gap-3 text-xs shrink-0 z-10 shadow-lg">
-            <div className="flex items-center gap-3 sm:gap-4 flex-wrap text-slate-200 font-medium">
+          <footer
+            className="p-3 sm:p-4 border-t border-[var(--glass-border)] bg-[var(--glass-bg-player)] backdrop-blur-md flex flex-wrap items-center justify-between gap-3 text-xs shrink-0 z-10 shadow-lg text-[var(--text-primary)]"
+            style={{
+              backdropFilter: 'blur(var(--glass-blur-player)) saturate(var(--glass-saturate))',
+              WebkitBackdropFilter: 'blur(var(--glass-blur-player)) saturate(var(--glass-saturate))',
+            }}
+          >
+            <div className="flex items-center gap-3 sm:gap-4 flex-wrap text-[var(--text-secondary)] font-medium">
               <span>
                 {t('downloader.selectedCount')}{' '}
-                <strong className="text-emerald-400 font-mono text-base font-bold">
+                <strong className="text-[var(--accent)] font-mono text-base font-bold">
                   {selectedChapterIds.size}
                 </strong>{' '}
                 {t('downloader.totalChaptersCount', { count: chapters.length })}
               </span>
-              <span className="text-slate-300">
+              <span className="text-[var(--text-muted)]">
                 {t('downloader.formatLabelShort')}{' '}
-                <strong className="text-white font-semibold">
+                <strong className="text-[var(--text-primary)] font-semibold">
                   {exportFormat === 'zip' ? t('downloader.zipPackage') : t('downloader.individualMp3Files')}
                 </strong>
               </span>
@@ -1310,8 +1328,8 @@ export const AudioDownloaderView: React.FC<AudioDownloaderViewProps> = ({
                   variant="secondary"
                   size="sm"
                   onClick={handleCancelExport}
-                  leftIcon={<XCircle className="w-4 h-4 text-red-500" />}
-                  className="text-red-400 border-red-500/30 hover:bg-red-500/10"
+                  leftIcon={<XCircle className="w-4 h-4 text-[var(--danger)]" />}
+                  className="text-[var(--danger)] border-[var(--danger)]/30 hover:bg-[var(--danger-soft)]"
                 >
                   {t('downloader.cancelExport')}
                 </Button>
@@ -1322,7 +1340,7 @@ export const AudioDownloaderView: React.FC<AudioDownloaderViewProps> = ({
                   disabled={selectedChapterIds.size === 0 || isBusy}
                   onClick={handleStartBatchExport}
                   leftIcon={<Download className="w-4 h-4 stroke-[2.2]" />}
-                  className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs sm:text-sm px-5 sm:px-6 py-2 shadow-md flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="px-5 sm:px-6 py-2 shadow-md flex items-center gap-2 font-bold text-xs sm:text-sm"
                   title={selectedChapterIds.size === 0 ? 'Vui lòng chọn ít nhất 1 chương để xuất âm thanh' : undefined}
                 >
                   <span>
