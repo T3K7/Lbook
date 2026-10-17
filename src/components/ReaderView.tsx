@@ -13,10 +13,10 @@ import {
   BookOpen,
   Type,
   Download,
-  Music,
   RefreshCw,
   Check,
   X,
+  AlertCircle,
 } from 'lucide-react';
 import {
   Book,
@@ -87,6 +87,7 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
   const [isDownloadingMp3, setIsDownloadingMp3] = useState(false);
   const [mp3Progress, setMp3Progress] = useState(0);
   const [mp3Success, setMp3Success] = useState(false);
+  const [mp3Error, setMp3Error] = useState<string | null>(null);
 
   const activeElementRef = useRef<HTMLSpanElement>(null);
   const readerScrollContainerRef = useRef<HTMLDivElement>(null);
@@ -122,10 +123,20 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
   );
 
   const handleQuickDownloadMp3 = async () => {
-    if (!currentChapter || isDownloadingMp3) return;
+    if (!currentChapter) {
+      setMp3Error('Không tìm thấy thông tin chương để xuất MP3.');
+      return;
+    }
+    if (!currentChapter.content?.trim() && (!currentChapter.paragraphs || currentChapter.paragraphs.length === 0)) {
+      setMp3Error('Chương này không có nội dung văn bản để xuất âm thanh.');
+      return;
+    }
+    if (isDownloadingMp3) return;
+
     setIsDownloadingMp3(true);
     setMp3Progress(0);
     setMp3Success(false);
+    setMp3Error(null);
 
     try {
       const dictionaries = StorageService.getDictionaries();
@@ -135,6 +146,7 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
         currentChapter,
         {
           bookTitle: book.title,
+          providerId: settings.defaultProviderId,
           voice: settings.defaultVoice,
           rate: settings.speechRate,
         },
@@ -149,6 +161,9 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
       setTimeout(() => setMp3Success(false), 3000);
     } catch (err: any) {
       console.error('Lỗi tải MP3:', err);
+      const msg = err?.message || 'Không thể tạo file MP3 cho chương này. Vui lòng thử lại.';
+      setMp3Error(msg);
+      setTimeout(() => setMp3Error(null), 5000);
     } finally {
       setIsDownloadingMp3(false);
     }
@@ -413,48 +428,28 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
             <button
               onClick={handleQuickDownloadMp3}
               disabled={isDownloadingMp3}
-              className={`h-10 px-3 rounded-xl flex items-center gap-1.5 transition-all cursor-pointer ${
+              className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
                 mp3Success
                   ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
                   : isDownloadingMp3
                   ? 'bg-[var(--accent-soft)] text-[var(--accent)] border border-[var(--accent-border)]'
-                  : 'hover:bg-[var(--accent-soft)] text-[var(--text-secondary)] hover:text-[var(--accent)]'
+                  : 'hover:bg-[var(--accent-soft)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
               }`}
-              title={t('reader.quickDownloadMp3')}
+              title={
+                isDownloadingMp3
+                  ? `${t('reader.quickDownloadMp3')} (${mp3Progress}%)`
+                  : mp3Success
+                  ? t('reader.downloadedMp3')
+                  : t('reader.quickDownloadMp3')
+              }
             >
               {isDownloadingMp3 ? (
-                <>
-                  <RefreshCw className="w-4 h-4 animate-spin text-[var(--accent)]" />
-                  <span className="text-xs font-mono font-medium">{mp3Progress}%</span>
-                </>
+                <RefreshCw className="w-4 h-4 animate-spin text-[var(--accent)]" />
               ) : mp3Success ? (
-                <>
-                  <Check className="w-4 h-4 text-emerald-400" />
-                  <span className="text-xs font-medium">{t('reader.downloadedMp3')}</span>
-                </>
+                <Check className="w-4 h-4 text-emerald-400" />
               ) : (
-                <>
-                  <Music className="w-4 h-4 text-[var(--accent)]" />
-                  <span className="text-xs font-medium hidden sm:inline">{t('reader.quickDownloadMp3')}</span>
-                </>
+                <Download className="w-4 h-4" />
               )}
-            </button>
-
-            {/* Download chapter text */}
-            <button
-              onClick={() => {
-                const blob = new Blob([currentChapter?.content || ''], { type: 'text/plain;charset=utf-8' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `${currentChapter?.title || 'chapter'}.txt`;
-                a.click();
-                URL.revokeObjectURL(url);
-              }}
-              className="w-10 h-10 rounded-xl hover:bg-[var(--accent-soft)] flex items-center justify-center transition-colors cursor-pointer text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-              title={t('reader.downloadText')}
-            >
-              <Download className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -600,6 +595,21 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
             </div>
           </div>
         </>
+      )}
+
+      {/* MP3 Download Error Toast */}
+      {mp3Error && (
+        <div className="absolute bottom-24 right-6 z-50 flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs bg-red-500/15 border border-red-500/30 text-red-300 shadow-xl backdrop-blur-md animate-in fade-in slide-in-from-bottom-2">
+          <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
+          <span className="font-medium">{mp3Error}</span>
+          <button
+            onClick={() => setMp3Error(null)}
+            className="ml-1 text-red-400 hover:text-white cursor-pointer"
+            title="Đóng"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
       )}
     </div>
   );

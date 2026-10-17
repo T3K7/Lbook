@@ -25,6 +25,7 @@
 | **`TASK-005`** | **Kiểm thử và tích hợp mô hình AI VinaTTS Offline** | MOD-01 (TTS) | `TODO` | Sẽ lập hồ sơ khi có binary |
 | **`TASK-006`** | **Tối ưu hóa quản lý bộ nhớ đệm khi tải trên 500 chương** | MOD-03 (Export) | `TODO` | Hàng đợi batch streaming |
 | **`TASK-007`** | **Sửa lỗi thư viện trống khi mở nhiều cửa sổ Lbook (BUG-005)** | MOD-02 / Desktop | `DONE` | [`bugs/BUG-005.md`](./bugs/BUG-005.md) |
+| **`TASK-008`** | **Gộp chức năng tải MP3 chương vào nút mũi tên tải xuống** | MOD-04 / MOD-03 | `DONE` | [`files/src__components__ReaderView.tsx.md`](./files/src__components__ReaderView.tsx.md) |
 
 ---
 

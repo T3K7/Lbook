@@ -16,6 +16,7 @@
     "lint:docs": "node scripts/check-docs.mjs",
     "test:voice": "node scripts/test-voice-selection.mjs",
     "test:multiwindow": "node scripts/test-multiwindow-storage.mjs",
+    "test:reader-download": "node scripts/test-reader-download-mp3.mjs",
     "build:renderer": "vite build",
     "build:electron": "node scripts/build-electron.mjs",
     "build:all": "npm run build:renderer && npm run build:electron",

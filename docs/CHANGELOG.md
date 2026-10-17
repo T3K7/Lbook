@@ -19,6 +19,15 @@
 - **Kiểm thử hồi quy (`scripts/test-multiwindow-storage.mjs`)**:
   - Xây dựng bộ test suite `npm run test:multiwindow` gồm 6 bài kiểm thử tự động đạt tỷ lệ đạt 100%.
 
+### 2. Gộp chức năng Tải MP3 vào nút Mũi tên Tải xuống (`ReaderView.tsx`)
+- **Tinh gọn giao diện thanh điều khiển**:
+  - Loại bỏ hoàn toàn nút có chữ "Tải MP3 chương này" và biểu tượng nốt nhạc.
+  - Sử dụng nút biểu tượng mũi tên tải xuống (`Download`) làm nút tải duy nhất ở thanh điều khiển dưới cùng.
+  - Tích hợp toàn bộ luồng xuất MP3: xác định chính xác sách và chương, tận dụng Audio Cache, tổng hợp giọng đọc theo cấu hình TTS và tốc độ đã chọn, lưu file định dạng `.mp3` chuẩn.
+  - Hiển thị phản hồi trạng thái rõ ràng: spinner xoay kèm phần trăm tiến độ khi đang tải, dấu tích xanh khi hoàn tất, và thông báo lỗi rõ ràng nếu chương rỗng hoặc quá trình tạo audio thất bại.
+- **Kiểm thử hồi quy (`scripts/test-reader-download-mp3.mjs`)**:
+  - Bộ kiểm thử tự động `npm run test:reader-download` gồm 6 bài kiểm thử đạt 100% PASS.
+
 ---
 
 ## Phiên bản 0.0.1 (2026-10-15)

@@ -14,7 +14,7 @@
 2. Bôi màu nổi bật (karaoke highlight) câu đang được TTS phát theo thời gian thực.
 3. Cho phép người dùng nhấp chuột vào bất kỳ từ/câu nào để tua giọng đọc đến ngay vị trí đó mà không bị giật hay lặp tiếng.
 4. Tự động cuộn trang (`autoScroll`) mượt mà giữ câu đang đọc ở vùng nhìn trung tâm.
-5. Hiển thị thanh công cụ nổi ở chân trang: Phát/Dừng, Chuyển câu trước/sau, Đổi giọng đọc, Chỉnh tốc độ, Hẹn giờ tắt (Sleep Timer), và Cài đặt phông chữ nhanh.
+5. Hiển thị thanh công cụ nổi ở chân trang: Phát/Dừng, Chuyển câu trước/sau, Đổi giọng đọc, Chỉnh tốc độ, Hẹn giờ tắt (Sleep Timer), Cài đặt phông chữ nhanh, và **Nút mũi tên tải xuống duy nhất** tích hợp chức năng tải file MP3 của chương hiện tại (kèm trạng thái loading %, checkmark hoàn tất và cảnh báo lỗi).
 6. Cung cấp ngăn kéo (drawer) xem danh sách chương và tìm kiếm từ khóa trong chương.
 
 ---
