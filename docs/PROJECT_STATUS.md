@@ -11,7 +11,7 @@
 | Module / Tính năng | Trạng thái kỹ thuật | Căn cứ xác minh & Kiểm thử thực tế |
 | :--- | :--- | :--- |
 | **01. Quản lý Thư viện (Library)** | `VERIFIED` | Nạp sách TXT, EPUB, PGP thành công; xóa sách có modal xác nhận, lọc/sắp xếp hoạt động chuẩn xác. |
-| **02. Lưu trữ Hybrid (IndexedDB)** | `VERIFIED` | Dữ liệu lưu vào `storytts_db_v1` (`books`, `chapters`), không bị giới hạn 5MB, migration `v6` khởi động sạch 0 truyện. |
+| **02. Lưu trữ Hybrid (IndexedDB)** | `VERIFIED` | Dữ liệu lưu vào `StoryTTS_IndexedDB_v2`, khởi tạo an toàn, đồng bộ đa cửa sổ qua `BroadcastChannel` và Single-Instance Lock. |
 | **03. Trình đọc thông minh (Reader)** | `VERIFIED` | Bôi màu câu đọc karaoke thời gian thực, tự động cuộn màn hình, nhấp tua câu tức thì với `GlobalAudioGuard`. |
 | **04. Pipeline âm thanh (TTS)** | `VERIFIED` | Hỗ trợ Google TTS tự nhiên, Edge Neural và Browser SAPI; tự động phát nối tiếp sang chương mới mượt mà. |
 | **05. Tải & Xuất MP3/ZIP (Downloader)**| `VERIFIED` | Xuất file MP3 chuẩn 128k CBR qua FFmpeg backend; đóng gói ZIP hàng loạt; giao diện đã hỗ trợ đầy đủ cả Light & Dark mode. |

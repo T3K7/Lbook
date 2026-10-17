@@ -28,10 +28,17 @@ Lbook áp dụng mô hình lai:
 
 ---
 
-## 3. Khởi tạo thư viện sạch & Dọn dẹp an toàn
+## 3. Khởi tạo an toàn & Đồng bộ đa cửa sổ (Cross-Window Sync)
 
-- **Khởi tạo sạch (`lbook_library_cleaned_v6`)**: Ứng dụng không sinh ra bất kỳ cuốn sách mẫu giả lập nào khi khởi chạy lần đầu. Thư viện bắt đầu với trạng thái 0 truyện sạch sẽ.
-- **Dọn dẹp thư viện an toàn (`StorageService.deleteAllBooks()`)**:
+- **Khởi tạo an toàn không xóa đè (`StorageService.init()`)**: 
+  - Đọc dữ liệu sách tức thì từ `localStorage` để render giao diện không độ trễ.
+  - Đồng thời kích hoạt bất đồng bộ `loadBooksAsync()` để hòa giải và nạp bổ sung bất kỳ truyện nào từ IndexedDB.
+  - Tuyệt đối không thực thi các thao tác xóa store hay xóa sạch dữ liệu người dùng khi mở cửa sổ mới.
+- **Kênh đồng bộ thời gian thực (`BroadcastChannel` & `storage` event)**:
+  - Khi Cửa sổ A lưu thêm, cập nhật hoặc xóa sách, sự kiện `BOOKS_UPDATED` được phát đi tức thì trên kênh `lbook_cross_window_sync`.
+  - Cửa sổ B nhận sự kiện, đồng bộ bộ nhớ đệm và kích hoạt cập nhật React state ngay lập tức mà không cần tải lại trang.
+- **Dọn dẹp thư viện chủ động (`StorageService.deleteAllBooks()`)**:
+  - Chỉ thực hiện khi người dùng chủ động nhấn nút xóa toàn bộ thư viện trong Cài đặt.
   - Xóa sạch store `books` và `chapters` trong IndexedDB.
   - Xóa sạch bộ nhớ đệm `memoryCache.chapters` và `memoryCache.books`.
   - Đặt lại lịch sử nghe và dấu trang.

@@ -9,4 +9,5 @@ contextBridge.exposeInMainWorld('lbookDesktop', {
   minimize: () => ipcRenderer.send('window-minimize'),
   maximize: () => ipcRenderer.send('window-maximize'),
   close: () => ipcRenderer.send('window-close'),
+  openNewWindow: () => ipcRenderer.send('window-new'),
 });

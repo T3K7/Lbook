@@ -4,6 +4,23 @@
 
 ---
 
+## Phiên bản 0.1.1 (2026-10-16)
+
+### 1. Sửa lỗi Thư viện trống khi mở nhiều cửa sổ (BUG-005)
+- **Đồng nhất Origin và Session trong Electron (`electron/main.ts`)**:
+  - Áp dụng `app.requestSingleInstanceLock()` để ngăn chặn tiến trình thứ hai khởi tạo backend trên port khác.
+  - Khi người dùng mở thêm cửa sổ trên Windows, sự kiện `second-instance` tạo cửa sổ phụ trên cùng backend và cùng web origin.
+  - Xử lý các sự kiện IPC `window-minimize`, `window-maximize`, `window-close` theo `event.sender` để mỗi cửa sổ điều khiển độc lập.
+- **Khởi tạo an toàn & Đồng bộ Cross-Window (`src/services/storage.ts`)**:
+  - Loại bỏ hoàn toàn cơ chế xóa đè `clearStore` khi khởi tạo cửa sổ mới.
+  - Tích hợp `BroadcastChannel('lbook_cross_window_sync')` và sự kiện `storage` chuẩn W3C để đồng bộ danh sách truyện thời gian thực giữa Cửa sổ A và Cửa sổ B mà không cần tải lại trang.
+  - Thêm `loadBooksAsync()` để tự động hòa giải và hợp nhất dữ liệu từ cả `localStorage` và `IndexedDB`.
+  - Cập nhật `IndexedDbHelper.setBook` chờ transaction hoàn tất (`tx.oncomplete`) trước khi xác nhận lưu thành công.
+- **Kiểm thử hồi quy (`scripts/test-multiwindow-storage.mjs`)**:
+  - Xây dựng bộ test suite `npm run test:multiwindow` gồm 6 bài kiểm thử tự động đạt tỷ lệ đạt 100%.
+
+---
+
 ## Phiên bản 0.0.1 (2026-10-15)
 
 ### 1. Hệ thống Tài liệu Kỹ thuật & Bàn giao AI (TASK-001)

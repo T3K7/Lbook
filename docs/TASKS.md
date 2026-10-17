@@ -24,6 +24,7 @@
 | **`TASK-004`** | **Cập nhật hiển thị phiên bản footer Sidebar thành v0.01** | Core Presentation | `DONE` | [`files/src__App.tsx.md`](./files/src__App.tsx.md) |
 | **`TASK-005`** | **Kiểm thử và tích hợp mô hình AI VinaTTS Offline** | MOD-01 (TTS) | `TODO` | Sẽ lập hồ sơ khi có binary |
 | **`TASK-006`** | **Tối ưu hóa quản lý bộ nhớ đệm khi tải trên 500 chương** | MOD-03 (Export) | `TODO` | Hàng đợi batch streaming |
+| **`TASK-007`** | **Sửa lỗi thư viện trống khi mở nhiều cửa sổ Lbook (BUG-005)** | MOD-02 / Desktop | `DONE` | [`bugs/BUG-005.md`](./bugs/BUG-005.md) |
 
 ---
 

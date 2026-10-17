@@ -8,7 +8,7 @@ import { createExpressApp } from '../server/app.ts';
 const currentFilename = typeof __filename !== 'undefined' ? __filename : '';
 const currentDirname = typeof __dirname !== 'undefined' ? __dirname : (currentFilename ? path.dirname(currentFilename) : process.cwd());
 
-let mainWindow: BrowserWindow | null = null;
+const windows = new Set<BrowserWindow>();
 let backendServer: http.Server | null = null;
 let backendPort = 3000;
 let backendBaseUrl = 'http://127.0.0.1:3000';
@@ -101,8 +101,8 @@ function waitForHttp(url: string, timeoutMs = 20000): Promise<void> {
   });
 }
 
-function createWindow() {
-  mainWindow = new BrowserWindow({
+function createWindow(): BrowserWindow {
+  const win = new BrowserWindow({
     width: 1280,
     height: 800,
     minWidth: 960,
@@ -120,56 +120,66 @@ function createWindow() {
     },
   });
 
-  // Handle IPC calls
-  ipcMain.handle('get-api-base-url', () => backendBaseUrl);
-  ipcMain.handle('get-app-version', () => app.getVersion());
+  windows.add(win);
 
-  ipcMain.on('window-minimize', () => {
-    mainWindow?.minimize();
-  });
-  ipcMain.on('window-maximize', () => {
-    if (mainWindow?.isMaximized()) {
-      mainWindow.unmaximize();
-    } else {
-      mainWindow?.maximize();
-    }
-  });
-  ipcMain.on('window-close', () => {
-    mainWindow?.close();
+  win.on('closed', () => {
+    windows.delete(win);
   });
 
-  mainWindow.on('closed', () => {
-    mainWindow = null;
-  });
-
-  // Load URL
+  // Load URL - ALL windows load from the SAME backendBaseUrl to guarantee identical origin, localStorage & IndexedDB
   if (isDev) {
-    // In dev mode, Vite is running on port 3000 (or backend port)
     const devUrl = process.env.VITE_DEV_SERVER_URL || backendBaseUrl;
-    console.log(`[Lbook Electron] Loading dev URL: ${devUrl}`);
+    console.log(`[Lbook Electron] Loading dev URL in window: ${devUrl}`);
     waitForHttp(`${backendBaseUrl}/api/health`, 15000)
       .then(() => {
-        mainWindow?.loadURL(devUrl);
+        if (!win.isDestroyed()) win.loadURL(devUrl);
       })
       .catch((err) => {
         console.error('Failed to connect to dev server, loading fallback', err);
-        mainWindow?.loadURL(devUrl);
+        if (!win.isDestroyed()) win.loadURL(devUrl);
       });
   } else {
-    // In production, backend serves dist/ via backendBaseUrl
     waitForHttp(`${backendBaseUrl}/api/health`, 15000)
       .then(() => {
-        mainWindow?.loadURL(backendBaseUrl);
+        if (!win.isDestroyed()) win.loadURL(backendBaseUrl);
       })
       .catch((err) => {
         console.error('Failed to connect to production internal backend:', err);
-        // Fallback load file directly
         const appRoot = app.isPackaged ? app.getAppPath() : path.resolve(currentDirname, '..');
         const fallbackFile = path.resolve(appRoot, 'dist', 'index.html');
-        mainWindow?.loadFile(fallbackFile);
+        if (!win.isDestroyed()) win.loadFile(fallbackFile);
       });
   }
+
+  return win;
 }
+
+// Global IPC Handlers (Registered once, dynamically resolving the calling BrowserWindow)
+ipcMain.handle('get-api-base-url', () => backendBaseUrl);
+ipcMain.handle('get-app-version', () => app.getVersion());
+
+ipcMain.on('window-minimize', (event) => {
+  const win = BrowserWindow.fromWebContents(event.sender);
+  win?.minimize();
+});
+
+ipcMain.on('window-maximize', (event) => {
+  const win = BrowserWindow.fromWebContents(event.sender);
+  if (win?.isMaximized()) {
+    win.unmaximize();
+  } else {
+    win?.maximize();
+  }
+});
+
+ipcMain.on('window-close', (event) => {
+  const win = BrowserWindow.fromWebContents(event.sender);
+  win?.close();
+});
+
+ipcMain.on('window-new', () => {
+  createWindow();
+});
 
 // Clean up background server on exit to avoid orphan processes
 function cleanupBackend() {
@@ -185,29 +195,48 @@ function cleanupBackend() {
   }
 }
 
-// Application Lifecycle
-app.whenReady().then(async () => {
-  try {
-    await startBackend();
-  } catch (err) {
-    console.error('Fatal: Could not start internal backend:', err);
-  }
-  createWindow();
+// Single Instance Lock:
+// Guarantees all secondary windows created by launching the app again run in the primary instance
+// and connect to the EXACT SAME loopback port, origin, session, localStorage, and IndexedDB!
+const gotTheLock = app.requestSingleInstanceLock();
 
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
+if (!gotTheLock) {
+  console.log('[Lbook Electron] Secondary process detected. Handing over to primary instance and exiting.');
+  app.quit();
+} else {
+  app.on('second-instance', () => {
+    console.log('[Lbook Electron] User opened second window. Creating new BrowserWindow on shared backend origin.');
+    const newWin = createWindow();
+    if (newWin) {
+      if (newWin.isMinimized()) newWin.restore();
+      newWin.focus();
     }
   });
-});
 
-app.on('before-quit', () => {
-  cleanupBackend();
-});
+  // Application Lifecycle
+  app.whenReady().then(async () => {
+    try {
+      await startBackend();
+    } catch (err) {
+      console.error('Fatal: Could not start internal backend:', err);
+    }
+    createWindow();
 
-app.on('window-all-closed', () => {
-  cleanupBackend();
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
-});
+    app.on('activate', () => {
+      if (windows.size === 0) {
+        createWindow();
+      }
+    });
+  });
+
+  app.on('before-quit', () => {
+    cleanupBackend();
+  });
+
+  app.on('window-all-closed', () => {
+    cleanupBackend();
+    if (process.platform !== 'darwin') {
+      app.quit();
+    }
+  });
+}

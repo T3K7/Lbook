@@ -21,9 +21,10 @@
 ## 2. Các hàm & Class quan trọng
 
 - `class StorageService`:
-  - `init()`: Khởi tạo hệ thống, chạy migration `lbook_library_cleaned_v6`, nạp danh sách sách vào RAM.
-  - `getBooks()`: Trả về danh sách sách từ RAM cache (đồng bộ).
-  - `saveBooks(books)`: Ghi danh sách sách vào RAM, LocalStorage và IndexedDB.
+  - `init()`: Khởi tạo an toàn (không xóa dữ liệu), đọc đồng bộ từ localStorage và kích hoạt `loadBooksAsync()`.
+  - `loadBooksAsync()`: Tự động hợp nhất và nạp bổ sung bất kỳ truyện nào từ IndexedDB vào RAM và localStorage.
+  - `getBooks()`: Trả về danh sách sách từ RAM cache và localStorage (đồng bộ).
+  - `saveBooks(books)`: Ghi danh sách sách vào RAM, LocalStorage, IndexedDB và phát sự kiện `BOOKS_UPDATED` qua `BroadcastChannel`.
   - `getChapters(bookId)`: Lấy danh sách chương từ RAM cache.
   - `loadChaptersAsync(bookId)`: Nạp bất đồng bộ toàn bộ chương của sách từ IndexedDB vào RAM cache.
   - `saveChapters(bookId, chapters)`: Lưu nội dung chương vào IndexedDB và RAM cache.

@@ -21,6 +21,7 @@
 | **`BUG-002`** | **Nguy cơ trùng âm thanh khi nhấp tua câu liên tục trong Reader** | `HIGH` | `src/services/tts/globalAudioGuard.ts` | `FIXED` | [`files/src__services__tts__globalAudioGuard.ts.md`](./files/src__services__tts__globalAudioGuard.ts.md) |
 | **`BUG-003`** | **Đầy bộ nhớ LocalStorage 5MB khi nạp truyện dài hàng trăm chương** | `CRITICAL`| `src/services/storage.ts` | `FIXED` | [`files/src__services__storage.ts.md`](./files/src__services__storage.ts.md) |
 | **`BUG-004`** | **Lỗi chọn và nghe thử bộ sưu tập giọng đọc tiếng Việt phát cùng một giọng** | `HIGH` | `src/components/VoiceSelectorModal.tsx` | `FIXED` | [`bugs/BUG-004.md`](./bugs/BUG-004.md) |
+| **`BUG-005`** | **Lỗi thư viện trống khi mở nhiều cửa sổ do phân mảnh origin Electron và thiếu đồng bộ cross-window** | `CRITICAL` | `electron/main.ts`, `src/services/storage.ts` | `FIXED` | [`bugs/BUG-005.md`](./bugs/BUG-005.md) |
 
 ---
 

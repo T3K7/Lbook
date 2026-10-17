@@ -11,11 +11,12 @@
 
 `electron/main.ts` là điểm vào chính (Main Process Entry Point) cho phiên bản Windows Desktop của Lbook. Tệp này chịu trách nhiệm:
 1. Quản lý vòng đời ứng dụng Electron (`app.whenReady()`, `before-quit`, `window-all-closed`).
-2. Tự động tìm cổng TCP trống trên card mạng cục bộ (`127.0.0.1`) và khởi chạy máy chủ Express nội bộ.
-3. Tạo và điều khiển cửa sổ ứng dụng chính (`BrowserWindow`) với kích thước 1280x800, hỗ trợ phóng to, thu nhỏ và thoát.
-4. Đợi máy chủ backend trả về HTTP 200 trước khi nạp trang web giao diện để ngăn ngừa lỗi kết nối ban đầu.
-5. Xử lý các thông điệp IPC từ Renderer: lấy Base URL backend (`get-api-base-url`), lấy phiên bản app (`get-app-version`), và các lệnh thu phóng cửa sổ.
-6. Đóng sạch sẽ máy chủ nội bộ khi người dùng thoát ứng dụng để không để lại tiến trình chạy ngầm.
+2. Quản lý Single-Instance Lock (`app.requestSingleInstanceLock()`) để ngăn phân mảnh origin; mở cửa sổ phụ trên cùng backend khi người dùng nhấp đúp biểu tượng Lbook.
+3. Tự động tìm cổng TCP trống trên card mạng cục bộ (`127.0.0.1`) và khởi chạy máy chủ Express nội bộ.
+4. Tạo và điều khiển tập hợp cửa sổ ứng dụng (`BrowserWindow`) với kích thước 1280x800, hỗ trợ phóng to, thu nhỏ và đóng từng cửa sổ độc lập.
+5. Đợi máy chủ backend trả về HTTP 200 trước khi nạp trang web giao diện để ngăn ngừa lỗi kết nối ban đầu.
+6. Xử lý các thông điệp IPC từ Renderer: lấy Base URL backend (`get-api-base-url`), lấy phiên bản app (`get-app-version`), và các lệnh thu phóng cửa sổ theo `event.sender`.
+7. Đóng sạch sẽ máy chủ nội bộ khi người dùng thoát ứng dụng để không để lại tiến trình chạy ngầm.
 
 ---
 

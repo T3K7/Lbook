@@ -109,6 +109,10 @@ class IndexedDbHelper {
       const tx = db.transaction('books', 'readwrite');
       const store = tx.objectStore('books');
       store.put(book);
+      return new Promise((res, rej) => {
+        tx.oncomplete = () => res();
+        tx.onerror = () => rej(tx.error);
+      });
     } catch (err) {
       console.warn('IndexedDB setBook error:', err);
     }
@@ -163,74 +167,114 @@ const memoryCache = {
   isHydrated: false,
 };
 
+// Cross-Window and Cross-Tab Real-time Synchronizer
+type StorageSyncMessage =
+  | { type: 'BOOKS_UPDATED'; books: Book[] }
+  | { type: 'PROGRESS_UPDATED'; progress: ReadingProgress }
+  | { type: 'BOOKMARKS_UPDATED'; bookmarks: Bookmark[] }
+  | { type: 'SETTINGS_UPDATED'; settings: AppSettings };
+
+let syncChannel: BroadcastChannel | null = null;
+if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+  try {
+    syncChannel = new BroadcastChannel('lbook_cross_window_sync');
+    syncChannel.onmessage = (event: MessageEvent<StorageSyncMessage>) => {
+      const data = event.data;
+      if (!data) return;
+
+      if (data.type === 'BOOKS_UPDATED') {
+        const cloned = data.books.map((b) => ({ ...b }));
+        memoryCache.books = cloned;
+        StorageService.notifyBooksChange(cloned, false);
+      }
+    };
+  } catch (e) {
+    console.warn('BroadcastChannel initialization error:', e);
+  }
+}
+
+// Storage event listener fallback (standard browser event fired across windows on same origin)
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', (e: StorageEvent) => {
+    if (e.key === STORAGE_KEYS.BOOKS && e.newValue) {
+      try {
+        const parsed = JSON.parse(e.newValue);
+        if (Array.isArray(parsed)) {
+          memoryCache.books = parsed.map((b: Book) => ({ ...b }));
+          StorageService.notifyBooksChange(memoryCache.books, false);
+        }
+      } catch {
+        // ignore parse error
+      }
+    }
+  });
+}
+
 export class StorageService {
   /**
-   * Initializes database with clean slate migration if needed, and hydrates memory cache.
-   * Does NOT generate sample books, ensuring user starts with a pristine library.
+   * Initializes database safely without destroying existing user books or IndexedDB stores.
+   * Hydrates memory cache synchronously from localStorage and asynchronously from IndexedDB.
    */
   static init(): { books: Book[]; activeBookId: string } {
-    const CLEAN_MIGRATION_KEY = 'lbook_library_cleaned_v6';
-    const isCleaned = localStorage.getItem(CLEAN_MIGRATION_KEY);
-
-    // Clean migration: purge any previous development/test books and stray chapter keys
-    if (!isCleaned) {
-      try {
-        localStorage.removeItem(STORAGE_KEYS.BOOKS);
-        localStorage.removeItem('lbook_library_backup_v3');
-        localStorage.removeItem('lbook_library_backup_v2');
-
-        // Remove all localStorage chapter chunks
-        const keysToRemove: string[] = [];
-        for (let i = 0; i < localStorage.length; i++) {
-          const k = localStorage.key(i);
-          if (k && (k.startsWith(STORAGE_KEYS.CHAPTERS_PREFIX) || k.startsWith('lbook_library_backup_'))) {
-            keysToRemove.push(k);
-          }
-        }
-        keysToRemove.forEach((k) => localStorage.removeItem(k));
-
-        localStorage.setItem(STORAGE_KEYS.PROGRESS, '{}');
-        localStorage.setItem(STORAGE_KEYS.BOOKMARKS, '[]');
-        localStorage.setItem(STORAGE_KEYS.HISTORY, '[]');
-        localStorage.removeItem('storytts_db_initialized');
-
-        // Clear IndexedDB books and chapters stores
-        IndexedDbHelper.clearStore('books');
-        IndexedDbHelper.clearStore('chapters');
-
-        // Reset memory cache
-        memoryCache.books = [];
-        memoryCache.chapters.clear();
-      } catch (e) {
-        console.warn('Migration cleanup error:', e);
-      }
-      localStorage.setItem(CLEAN_MIGRATION_KEY, 'true');
+    const INIT_FLAG_KEY = 'lbook_storage_initialized_v2';
+    if (typeof localStorage !== 'undefined' && !localStorage.getItem(INIT_FLAG_KEY)) {
+      localStorage.setItem(INIT_FLAG_KEY, 'true');
     }
 
     const books = this.getBooks();
     memoryCache.books = [...books];
 
-    // Asynchronously sync from IndexedDB if any extra books exist (only if not freshly cleaned)
-    if (isCleaned) {
-      IndexedDbHelper.getAllBooks().then((idbBooks) => {
-        if (idbBooks && idbBooks.length > 0) {
-          const merged = [...memoryCache.books];
-          let hasNew = false;
-          for (const ib of idbBooks) {
-            if (!merged.some(b => b.id === ib.id)) {
-              merged.push(ib);
-              hasNew = true;
-            }
-          }
-          if (hasNew) {
-            memoryCache.books = merged;
-            this.notifyBooksChange(merged);
-          }
-        }
-      });
-    }
+    // Asynchronously merge and hydrate books from IndexedDB to ensure Window B has full library
+    this.loadBooksAsync();
 
     return { books: [...books], activeBookId: books[0]?.id || '' };
+  }
+
+  /**
+   * Asynchronously merges and hydrates books from both localStorage and IndexedDB.
+   * Ensures that Window B receives all books even if IndexedDB query takes several milliseconds.
+   */
+  static async loadBooksAsync(): Promise<Book[]> {
+    const localBooks = this.getBooks();
+
+    try {
+      const idbBooks = await IndexedDbHelper.getAllBooks();
+      if (idbBooks && idbBooks.length > 0) {
+        const bookMap = new Map<string, Book>();
+
+        // 1. Seed with IndexedDB books
+        for (const b of idbBooks) {
+          bookMap.set(b.id, b);
+        }
+
+        // 2. Merge with localBooks (prefer newer updatedAt)
+        for (const b of localBooks) {
+          const existing = bookMap.get(b.id);
+          if (!existing || new Date(b.updatedAt || 0).getTime() >= new Date(existing.updatedAt || 0).getTime()) {
+            bookMap.set(b.id, b);
+          }
+        }
+
+        const merged = Array.from(bookMap.values());
+        merged.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+
+        memoryCache.books = merged;
+        try {
+          if (typeof localStorage !== 'undefined') {
+            localStorage.setItem(STORAGE_KEYS.BOOKS, JSON.stringify(merged));
+          }
+        } catch (e) {
+          console.warn('localStorage sync warning:', e);
+        }
+
+        this.notifyBooksChange(merged, true);
+        return merged;
+      }
+    } catch (err) {
+      console.warn('loadBooksAsync error:', err);
+    }
+
+    return localBooks;
   }
 
   // --- Reactive Books Pub/Sub Store ---
@@ -246,38 +290,53 @@ export class StorageService {
 
   /**
    * Notifies all active subscribers with a fresh immutable copy of the books array.
+   * If broadcast is true, also emits across all open windows via BroadcastChannel.
    */
-  static notifyBooksChange(books: Book[]): void {
-    const copy = books.map(b => ({ ...b }));
-    this.booksListeners.forEach(listener => {
+  static notifyBooksChange(books: Book[], broadcast: boolean = true): void {
+    const copy = books.map((b) => ({ ...b }));
+    this.booksListeners.forEach((listener) => {
       try {
         listener(copy);
       } catch (err) {
         console.warn('Error in books listener:', err);
       }
     });
+
+    if (broadcast && syncChannel) {
+      try {
+        syncChannel.postMessage({ type: 'BOOKS_UPDATED', books: copy });
+      } catch (e) {
+        console.warn('BroadcastChannel postMessage error:', e);
+      }
+    }
   }
 
   // --- Books ---
   static getBooks(): Book[] {
-    if (memoryCache.books.length > 0) {
-      return memoryCache.books.map(b => ({ ...b }));
-    }
     try {
-      const data = localStorage.getItem(STORAGE_KEYS.BOOKS);
-      const list = data ? JSON.parse(data) : [];
-      memoryCache.books = list;
-      return list.map((b: Book) => ({ ...b }));
+      if (typeof localStorage !== 'undefined') {
+        const data = localStorage.getItem(STORAGE_KEYS.BOOKS);
+        if (data) {
+          const list = JSON.parse(data);
+          if (Array.isArray(list)) {
+            memoryCache.books = list;
+            return list.map((b: Book) => ({ ...b }));
+          }
+        }
+      }
     } catch {
-      return (memoryCache.books || []).map(b => ({ ...b }));
+      // fallback to memory cache if localStorage read error
     }
+    return (memoryCache.books || []).map((b) => ({ ...b }));
   }
 
   static saveBooks(books: Book[]): Book[] {
-    const cloned = books.map(b => ({ ...b }));
+    const cloned = books.map((b) => ({ ...b }));
     memoryCache.books = cloned;
     try {
-      localStorage.setItem(STORAGE_KEYS.BOOKS, JSON.stringify(cloned));
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(STORAGE_KEYS.BOOKS, JSON.stringify(cloned));
+      }
     } catch (e) {
       console.warn('localStorage books quota reached:', e);
     }
@@ -285,8 +344,8 @@ export class StorageService {
     for (const b of cloned) {
       IndexedDbHelper.setBook(b);
     }
-    // Notify all subscribers (React states, LibraryView, etc.)
-    this.notifyBooksChange(cloned);
+    // Notify all subscribers in this window and across all open windows
+    this.notifyBooksChange(cloned, true);
     return cloned;
   }
 
